@@ -15,6 +15,7 @@ fileDescPhysicalAddr = (physicalPageNum * 512) + offset;
 alias fileDescriptor R4;
 fileDescriptor = [fileDescPhysicalAddr];
 
+breakpoint;
 if(fileDescriptor != -2)
 then
 	alias physicalAddrRetVal R5;
