@@ -3,7 +3,7 @@ decl
     int a,temp;
 enddecl
 begin
-    a=0;
+    a=1;
     while(a <= 100) do
         temp = exposcall("Write", -2, a);
         a = a + 2;

@@ -10,3 +10,4 @@ y.tab.h
 *xsm
 .DS_Store
 .vscode/
+spl_progs/*.xsm

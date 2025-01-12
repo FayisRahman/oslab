@@ -1,0 +1,39 @@
+decl
+    int checkPrime(int a);
+enddecl
+int checkPrime(int a){
+    decl
+        int i,ans,mul;
+    enddecl
+    begin
+        i=2;
+        ans = 1;
+        mul = i * i;
+        while(mul < a) do
+            if((a % i) == 0) then
+                ans = 0;
+                break;
+            endif;
+            i = i + 1;
+            mul = i*i;
+        endwhile;
+        return ans;
+    end
+}
+
+int main(){
+    decl
+        int a,b;
+    enddecl
+    begin
+        a = 1;
+        while(a<=100) do
+            if( checkPrime(a) == 1) then
+                b = exposcall("Write",-2, a);
+            endif;
+            a = a + 1;
+        endwhile;
+    return 0;
+    end
+
+}

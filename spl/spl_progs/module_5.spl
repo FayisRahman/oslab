@@ -4,7 +4,6 @@ currentPID = [SYSTEM_STATUS_TABLE+1];
 
 multipush(BP);
 
-
 alias process_table_entry R2;
 process_table_entry = PROCESS_TABLE + currentPID * 16;
 
