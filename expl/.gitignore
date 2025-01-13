@@ -9,6 +9,6 @@ y.tab.h
 *.temp
 *.o
 .DS_Store
-expl/expl_progs/*.xsm
-expl/samples/*.xsm
+expl_progs/*.xsm
+samples/*.xsm
 .vscode/*

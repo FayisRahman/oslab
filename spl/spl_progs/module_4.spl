@@ -1,7 +1,10 @@
+breakpoint;
 alias functionNum R1;
 alias currentPID R2;
-alias word R3;
+alias word R3; //for terminal write
 
+
+//terminalWrite
 if(functionNum == 3) then
 
     multipush(R0,R1,R2,R3);
@@ -24,6 +27,43 @@ if(functionNum == 3) then
 
     return;
 
-else 
-    return;
 endif;
+
+//terminalRead
+if(functionNum == 4) then
+
+    alias wordAddr R3; //for terminal read
+
+    multipush(R0,R1,R2,R3);
+
+    functionNum = 8;
+
+    //we also need R2 register to contain the PID of the current process as we have done this before call the module 4 we do not have to worry about it now
+    //also R3 register need to contain the wordAddr to store the input this also we ahve done before call MOD_4
+    
+    call MOD_0;
+
+    multipop(R0,R1,R2,R3);
+
+    read;
+
+    [PROCESS_TABLE + currentPID * 16 + 4] = WAIT_TERMINAL;
+
+    //invoking the resource manager module as we are done using the terminal now so we will release the terminal lock
+
+    multipush(R0,R1,R2,R3);
+
+    call MOD_5;
+
+    multipop(R0,R1,R2,R3);
+
+    alias physicalWordAddr R4;
+    physicalWordAddr = ([PTBR + 2 * (wordAddr/512)] * 512) + (wordAddr % 512);
+
+    [physicalWordAddr] = [PROCESS_TABLE + currentPID * 16 + 8];
+
+    
+    return;
+
+endif;
+

@@ -1,3 +1,5 @@
+breakpoint;
+
 alias functionNum R1;
 alias currentPID R2;
 
@@ -21,7 +23,6 @@ if(functionNum == 8) then
     
     [TERMINAL_STATUS_TABLE + 1] = currentPID; //current running process
 
-    breakpoint;
 
     return;
 
@@ -59,8 +60,6 @@ if(functionNum == 9) then
     endwhile;
 
     R0 = 0;
-
-    breakpoint;
 
     return;
 

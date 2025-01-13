@@ -1,0 +1,71 @@
+
+decl
+    int gcd(int a, int b);
+    int bubblesort(int n);
+    int arr[30];
+enddecl
+
+int gcd(int a,int b){
+    decl
+        int ans;
+    enddecl
+    begin
+    if(b==0) then
+        ans = a;
+    else
+        ans = gcd(b, a%b);
+    endif;
+    return ans;
+    end
+}
+
+int bubblesort(int n){
+decl
+    int i,j,min,temp;
+enddecl
+begin
+    i=0;
+    j=0;
+    min = 0;
+    while(i<n) do
+        j = i;
+        min = i;
+        while(j<n) do
+            if(arr[j]<arr[min]) then
+                min = j;
+            endif;
+            j = j + 1;
+        endwhile;
+        temp = arr[i];
+        arr[i] = arr[min];
+        arr[min] = temp;
+        i = i + 1;
+    endwhile;
+    return 0;
+end
+}
+
+
+int main(){
+decl
+    int n,i,temp,ans;
+enddecl
+begin
+    breakpoint;
+    temp = exposcall("Read", -1 ,n);
+    breakpoint;
+    i = 0;
+    while(i<n) do
+        temp = exposcall("Read",-1,arr[i]);
+        i = i+1;
+    endwhile;
+    ans = bubblesort(n);
+    i=0;
+    while(i<n) do
+        temp = exposcall("Write",-2,arr[i]);
+        i = i+1;
+    endwhile;
+
+    return 0;
+end
+}

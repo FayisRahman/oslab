@@ -1,10 +1,18 @@
+//exception
+loadi(2, 15);
+loadi(3, 16);
+
 //timer
 loadi(4, 17);
 loadi(5, 18);
 
-//exception
-loadi(2, 15);
-loadi(3, 16);
+//console_interrupt
+loadi(8,21);
+loadi(9,22);
+
+//int6
+loadi(14,27);
+loadi(15,28);
 
 //int7
 loadi(16,29);
@@ -34,8 +42,10 @@ loadi(41,54);
 loadi(48,61);
 loadi(49,62);
 
-//loading second process
-loadi(83,69);
+
+
+// loading second process
+// loadi(83,69); not loaded
 
 //initializing Terminal status table
 
@@ -110,65 +120,65 @@ PTLR = 10;
 
 [ 76 * 512 ] = [65 * 512 + 1];
 
+//not there for stage16
+// //process2_page_Table
 
-//process2_page_Table
+// PTBR = PAGE_TABLE_BASE+40;
+// PTLR = 10;
 
-PTBR = PAGE_TABLE_BASE+40;
-PTLR = 10;
+// //Library
+// [PTBR+0] = 63;
+// [PTBR+1] = "0100";
+// [PTBR+2] = 64;
+// [PTBR+3] = "0100";
 
-//Library
-[PTBR+0] = 63;
-[PTBR+1] = "0100";
-[PTBR+2] = 64;
-[PTBR+3] = "0100";
+// //Heap
+// [PTBR+4] = 86;
+// [PTBR+5] = "0110";
+// [PTBR+6] = 87;
+// [PTBR+7] = "0110";
 
-//Heap
-[PTBR+4] = 86;
-[PTBR+5] = "0110";
-[PTBR+6] = 87;
-[PTBR+7] = "0110";
+// //Code
+// [PTBR+8] = 83;
+// [PTBR+9] = "0100";
+// [PTBR+10] = -1;
+// [PTBR+11] = "0000";
+// [PTBR+12] = -1;
+// [PTBR+13] = "0000";
+// [PTBR+14] = -1;
+// [PTBR+15] = "0000";
 
-//Code
-[PTBR+8] = 83;
-[PTBR+9] = "0100";
-[PTBR+10] = -1;
-[PTBR+11] = "0000";
-[PTBR+12] = -1;
-[PTBR+13] = "0000";
-[PTBR+14] = -1;
-[PTBR+15] = "0000";
-
-//Stack
-[PTBR+16] = 84;
-[PTBR+17] = "0110";
-[PTBR+18] = 85;
-[PTBR+19] = "0110";
-
-
-//pid_for_process2
-[PROCESS_TABLE + 16*2 + 1] = 2;
-
-//process2_process_gets_Scheduled_first
-
-[PROCESS_TABLE + 16*2 + 4] = CREATED;
-
-//user_area_page
-[PROCESS_TABLE + 16*2 + 11] = 88;
-
-//KPTR_for_process2
-[PROCESS_TABLE + 16*2 + 12] = 0;
-
-//UPTR_for_process2
-[PROCESS_TABLE + 16*2  + 13] = 8*512;
-
-//PTBR_for_process2
-[PROCESS_TABLE + 16*2 + 14] = PTBR;
-
-//PTLR_for_process2
-[PROCESS_TABLE + 16*2 + 15] = PTLR;
+// //Stack
+// [PTBR+16] = 84;
+// [PTBR+17] = "0110";
+// [PTBR+18] = 85;
+// [PTBR+19] = "0110";
 
 
-[ 84 * 512 ] = [83 * 512 + 1];
+// //pid_for_process2
+// [PROCESS_TABLE + 16*2 + 1] = 2;
+
+// //process2_process_gets_Scheduled_first
+
+// [PROCESS_TABLE + 16*2 + 4] = CREATED;
+
+// //user_area_page
+// [PROCESS_TABLE + 16*2 + 11] = 88;
+
+// //KPTR_for_process2
+// [PROCESS_TABLE + 16*2 + 12] = 0;
+
+// //UPTR_for_process2
+// [PROCESS_TABLE + 16*2  + 13] = 8*512;
+
+// //PTBR_for_process2
+// [PROCESS_TABLE + 16*2 + 14] = PTBR;
+
+// //PTLR_for_process2
+// [PROCESS_TABLE + 16*2 + 15] = PTLR;
+
+
+// [ 84 * 512 ] = [83 * 512 + 1];
 
 
 return;
