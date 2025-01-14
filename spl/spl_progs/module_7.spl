@@ -2,6 +2,10 @@
 loadi(2, 15);
 loadi(3, 16);
 
+//inode table
+loadi(59,3);
+loadi(60,4);
+
 //timer
 loadi(4, 17);
 loadi(5, 18);
@@ -17,6 +21,10 @@ loadi(15,28);
 //int7
 loadi(16,29);
 loadi(17,30);
+
+//int9
+loadi(20,33);
+loadi(21,34);
 
 //halt or int10
 loadi(22,35);
@@ -38,14 +46,19 @@ loadi(66,8);
 loadi(40,53);
 loadi(41,54);
 
+//module 1
+loadi(42,55);
+loadi(43,56);
+
+//module 2
+loadi(44,57);
+loadi(45,58);
+
 //module 4
 loadi(48,61);
 loadi(49,62);
 
 
-
-// loading second process
-// loadi(83,69); not loaded
 
 //initializing Terminal status table
 
@@ -59,8 +72,27 @@ while(i<16) do
     [PROCESS_TABLE + 16*i + 4] = TERMINATED;
     i = i + 1;
 endwhile;
-multipop(R0);
 
+//initialising memory free list
+
+//as effective free page start from 83 (we used some for idle and init process) and upto 127
+i = 0;
+
+while(i < NUM_MEM_PAGES) do
+    if(i < 83) then
+        [MEMORY_FREE_LIST + i] = 1;
+    else
+        [MEMORY_FREE_LIST + i] = 0;
+    endif;
+    i = i + 1;
+endwhile;
+
+//initialising system status table
+
+[SYSTEM_STATUS_TABLE + 2] = 45;
+[SYSTEM_STATUS_TABLE + 3] = 0;
+
+multipop(R0);
 //init_page_Table
 
 PTBR = PAGE_TABLE_BASE+20;

@@ -1,0 +1,149 @@
+//exec system call
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = SP;
+
+alias userSP R0;
+userSP = SP;
+
+
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 - 1;
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 9;
+
+
+alias physicalPageNum R1;
+alias offset R2;
+alias fileName R3;
+
+alias page_table R9;
+page_table = PAGE_TABLE_BASE + 20 * [SYSTEM_STATUS_TABLE + 1];
+
+
+physicalPageNum = [PTBR + 2 * ((userSP - 4 ) / 512)];
+offset = (userSP - 4) % 512;
+
+fileName = [physicalPageNum * 512 + offset];
+
+alias i R4;
+//finding the file using inode table
+i = 0;
+while(i < MAX_FILE_NUM) do
+                                
+    if([INODE_TABLE + i * 16 + 1] == fileName && [INODE_TABLE + i * 16 + 0] == EXEC) then //filename and filetype respectively
+        break;
+    endif;
+    i = i + 1;
+endwhile;
+
+if(i == MAX_FILE_NUM) then
+
+    alias physicalAddrRetVal R5;
+    physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1)/512)] * 512)  + ((userSP-1) % 512);
+    [physicalAddrRetVal] = -1;
+
+    [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+    SP = userSP;
+    ireturn;
+endif;
+
+//calling the exit process to terminate the current process
+alias inodeIndex R5;
+inodeIndex = i;
+
+multipush(R0,R1,R2,R3,R4,R5);
+
+alias arg1 R1;
+alias arg2 R2;
+
+arg1 = 3;
+arg2 = [SYSTEM_STATUS_TABLE + 1];
+
+call MOD_1;
+
+multipop(R0,R1,R2,R3,R4,R5);
+
+alias userAreaPage R6;
+userAreaPage = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11];
+
+[MEMORY_FREE_LIST + userAreaPage] = [MEMORY_FREE_LIST + userAreaPage] + 1; //incresing the no.of process using this mem page
+
+[SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] - 1; //decrease MEM_FREE_COUNT
+
+SP = userAreaPage * 512;
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 4] = RUNNING;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 7] = inodeIndex;
+
+//allocating new pages for the process
+
+//setting the library pages
+[PTBR + 0] = 63;
+[PTBR + 1] = "0100";
+[PTBR + 2] = 64;
+[PTBR + 3] = "0100";
+
+multipush(R0,R1,R2,R3,R4,R5,R6);
+
+//setting the heap pages
+
+arg1 = 1; //for get free page
+call MOD_2;
+[PTBR + 4] = R0;
+[PTBR + 5] = "0110";
+
+arg1 = 1; //for get free page
+call MOD_2;
+[PTBR + 6] = R0;
+[PTBR + 7] = "0110";
+
+//stack pages
+
+arg1 = 1; //for get free page
+call MOD_2;
+[PTBR + 16] = R0;
+[PTBR + 17] = "0110";
+
+arg1 = 1; //for get free page
+call MOD_2;
+[PTBR + 18] = R0;
+[PTBR + 19] = "0110";
+
+multipop(R0,R1,R2,R3,R4,R5,R6);
+
+alias codeSize R7;
+codeSize = (([INODE_TABLE + inodeIndex * 16 + 2] - 1) / 512) + 1;
+
+i = 0;
+
+multipush(R0,R1,R2,R3,R4,R5,R6,R7);
+
+while(i<4) do
+    if(i < codeSize) then
+        arg1 = 1; //for get free page
+        call MOD_2;
+        [PTBR + 8 + 2 * i] = R0;
+        [PTBR + 9 + 2 * i] = "0100";
+    else
+        [PTBR + 8 + 2 * i] = -1;
+        [PTBR + 9 + 2 * i] = "0000";
+    endif;
+    i = i + 1;
+endwhile;
+
+multipop(R0,R1,R2,R3,R4,R5,R6,R7);
+
+i = 0;
+while(i<codeSize) do
+    loadi([PTBR + 8 + 2 * i],[INODE_TABLE + inodeIndex * 16 + 8 + i]);
+    i = i + 1;
+endwhile;
+
+[[PTBR + 16]*512] = [[PTBR + 8]*512 + 1];
+
+SP = 8*512; 
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+ireturn;
+
+
+

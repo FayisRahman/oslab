@@ -1,0 +1,60 @@
+//MEMORY MANAGER MODULE
+
+alias functionNum R1;
+alias pageNum R2;
+
+//get free page
+if(functionNum == 1) then
+    
+    [SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] + 1; //Wait mem count
+    
+    while([SYSTEM_STATUS_TABLE + 2] == 0) do //that is until u get a free mem page
+        multipush(R1);
+        call MOD_5; //calling scheduler
+        multipop(R1);
+    endwhile;
+    
+    [SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] - 1; //Wait mem count
+    [SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] - 1; //allocated a free page so decrease from total page
+
+    alias memPage R3;
+    memPage = 0;
+
+    while([MEMORY_FREE_LIST + memPage] > 0 && memPage < 128) do
+        memPage = memPage + 1;
+    endwhile;
+
+    [MEMORY_FREE_LIST + memPage] = 1; //allocated to a process
+
+    R0 = memPage;
+
+    print "get free page";
+    breakpoint;
+
+    return;
+
+endif;
+
+//release page
+if(functionNum == 2) then
+    
+    [MEMORY_FREE_LIST + pageNum] = [MEMORY_FREE_LIST + pageNum] - 1; //decrease the page use count
+    if([MEMORY_FREE_LIST + pageNum] == 0) then
+        [SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] + 1; //increase the free page count
+    endif;
+
+    alias pid R3;
+    pid = 1;
+    while(pid < 16) do
+        if([PROCESS_TABLE + pid * 16 + 4] == WAIT_MEM) then
+            [PROCESS_TABLE + pid * 16 + 4] = READY;
+        endif;
+        pid = pid + 1;
+    endwhile;
+
+    print "release page";
+    breakpoint;
+
+    return;
+    
+endif;
