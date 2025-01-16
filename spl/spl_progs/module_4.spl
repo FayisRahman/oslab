@@ -48,7 +48,7 @@ if(functionNum == 4) then
 
     [PROCESS_TABLE + currentPID * 16 + 4] = WAIT_TERMINAL;
 
-    //invoking the resource manager module as we are done using the terminal now so we will release the terminal lock
+    //invoking the shcheduler as the read is non bloacking and will continue to run the instructions so to avoid that we will call the scheduler and let other process do the work till we get an input
 
     multipush(R0,R1,R2,R3);
 

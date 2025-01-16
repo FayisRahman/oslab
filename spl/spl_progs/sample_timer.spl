@@ -15,8 +15,8 @@ while(i<16) do
 	endif;
 	i = i + 1;
 endwhile;
-call MOD_5;
 
+call MOD_5;
 
 restore;
 
