@@ -29,7 +29,6 @@ if(functionNum == 1) then
     R0 = memPage;
 
     print "get free page";
-    breakpoint;
 
     return;
 
@@ -53,7 +52,6 @@ if(functionNum == 2) then
     endwhile;
 
     print "release page";
-    breakpoint;
 
     return;
     

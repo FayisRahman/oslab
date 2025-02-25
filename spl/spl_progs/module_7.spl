@@ -58,6 +58,12 @@ loadi(45,58);
 loadi(48,61);
 loadi(49,62);
 
+//disk interrupt handler
+loadi(6,19);
+loadi(7,20);
+
+//initialising disk status table
+[DISK_STATUS_TABLE + 0] = 0;
 
 
 //initializing Terminal status table
@@ -151,6 +157,17 @@ PTLR = 10;
 
 
 [ 76 * 512 ] = [65 * 512 + 1];
+
+
+//initialising per process table of init process
+alias perProcessTable R1;
+perProcessTable = ([PROCESS_TABLE + 16 + 11] + 1) * 512 - 16;
+
+i=0;
+while(i<16) do
+    [perProcessTable + i] = -1;
+    i = i + 1;
+endwhile;
 
 //not there for stage16
 // //process2_page_Table

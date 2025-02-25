@@ -1,3 +1,5 @@
+//DEVICE MANAGER MODULE
+
 alias functionNum R1;
 alias currentPID R2;
 alias word R3; //for terminal write
@@ -62,6 +64,42 @@ if(functionNum == 4) then
     [physicalWordAddr] = [PROCESS_TABLE + currentPID * 16 + 8];
 
     
+    return;
+
+endif;
+
+//Disk Load
+if(functionNum == 2) then
+    breakpoint;
+    print "Disk Load";
+    alias arg1 R1; //function number
+    alias arg2 R2; // PID
+    alias pageNumber R3; //pageNumber
+    alias blockNumber R4; //block number
+
+    arg1 = 3; //acquire disk
+    arg2 = currentPID;
+
+    multipush(R0,R1,R2,R3,R4);
+
+    call MOD_0;
+
+    multipop(R0,R1,R2,R3,R4);
+
+    [DISK_STATUS_TABLE + 1] = 0; //load
+    [DISK_STATUS_TABLE + 2] = pageNumber; //page number
+    [DISK_STATUS_TABLE + 3] = blockNumber; //block number
+
+    load(pageNumber,blockNumber);
+
+    [PROCESS_TABLE + currentPID * 16 + 4] = WAIT_DISK;
+
+    multipush(R0,R1,R2,R3,R4);
+
+    call MOD_5;
+
+    multipop(R0,R1,R2,R3,R4);
+
     return;
 
 endif;
