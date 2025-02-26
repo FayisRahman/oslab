@@ -1,7 +1,7 @@
 //MEMORY MANAGER MODULE
 
 alias functionNum R1;
-alias pageNum R2;
+
 
 //get free page
 if(functionNum == 1) then
@@ -36,7 +36,7 @@ endif;
 
 //release page
 if(functionNum == 2) then
-    
+    alias pageNum R2;
     [MEMORY_FREE_LIST + pageNum] = [MEMORY_FREE_LIST + pageNum] - 1; //decrease the page use count
     if([MEMORY_FREE_LIST + pageNum] == 0) then
         [SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] + 1; //increase the free page count
@@ -55,4 +55,69 @@ if(functionNum == 2) then
 
     return;
     
+endif;
+
+
+//get code page
+if(functionNum == 5) then
+    print "get code page";
+    alias blockNum R2;
+    alias diskMapTable R3;
+    alias i R4;
+    alias j R5;
+    alias auxilaryWord R6;
+    alias memPageNum R7;
+    
+    i=0;
+    while(i<16) do
+        diskMapTable = DISK_MAP_TABLE + i*10;
+        j = 0;
+        while(j<4) do
+            if([diskMapTable + 4 + j] == blockNum) then
+                auxilaryWord = [PAGE_TABLE_BASE + i*20 + 9 + 2*j];
+                if(auxilaryWord == "0100" || auxilaryWord == "0110" || auxilaryWord == "0101" || auxilaryWord == "0110" || auxilaryWord == "0111" || auxilaryWord == "1100" || auxilaryWord == "1110" || auxilaryWord == "1101" || auxilaryWord == "1111") then
+                    memPageNum = [PAGE_TABLE_BASE + i*20 + 8 + j*2];
+                    if(memPageNum != - 1) then
+                        [MEMORY_FREE_LIST + memPageNum] = [MEMORY_FREE_LIST + memPageNum] + 1;
+                        R0 = memPageNum;
+                        return;
+                    endif;
+                endif;  
+            endif;
+            j = j + 1;
+        endwhile;
+        i = i + 1;
+    endwhile;
+
+    //disk block not found in any process mem page
+
+    multipush(R1,R2,R3,R4,R5,R6,R7);
+
+    functionNum = 1; //to get a memory page to store the disk block diskMapTable
+    call MOD_2;
+
+    multipop(R1,R2,R3,R4,R5,R6,R7);
+
+    memPageNum = R0;
+
+    //now since we got the memory page we need to load it from the disk using disk load function using device manager
+
+    multipush(R1,R2,R3,R4,R5,R6,R7);
+
+    functionNum = 2; //disk load
+    R4 = blockNum; //block number
+    R2 = [SYSTEM_STATUS_TABLE + 1]; //current PID //here why we put R4 before R2 was that we are using R2 for blockNum in this fucntion scope but the parameters of the next funtion which is disk load requires R2 to be currentPID and R4 as block number so first we put R4 = R2 then R2 = currentPID;
+    R3 = memPageNum; //page number
+     
+    call MOD_4;
+
+    multipop(R1,R2,R3,R4,R5,R6,R7);
+
+    //now we have loaded the disk block to the memory page (updating the page table entry is done in the exception handler and no need to worry about it)
+    //returning the obtained memory page
+
+    R0 = memPageNum;
+
+    return;
+
 endif;

@@ -1,5 +1,5 @@
+//when a process ends
 alias pid R0;
-
 pid = [SYSTEM_STATUS_TABLE + 1];
 
 [PROCESS_TABLE + pid * 16 + 4] = TERMINATED;

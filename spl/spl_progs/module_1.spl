@@ -64,5 +64,23 @@ if (functionNumber == 4) then
         i = i + 1;
     endwhile;
 
+    //here we loop through the disk map table to see which disk blocks were allocated to the stack and heap processes during runtime and which needs to be released
+    alias diskMapTable R5;
+    diskMapTable = DISK_MAP_TABLE + 10*currentPID;
+    i=2;
+    while(i<10) do
+        if(i < 4 || i > 7) then
+            if([diskMapTable + i] != -1) then
+                multipush(R1,R2,R3,R4,R5);
+                R1 = 4;
+                R2 = [diskMapTable + i];
+                R3 = currentPID;
+                call MOD_2;
+                multipop(R1,R2,R3,R4,R5);
+                [diskMapTable + i] = -1;
+            endif;
+        endif;
+        i = i + 1;
+    endwhile;
     return;
 endif;

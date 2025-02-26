@@ -8,23 +8,23 @@ alias word R3; //for terminal write
 //terminalWrite
 if(functionNum == 3) then
 
-    multipush(R0,R1,R2,R3);
+    multipush(R1,R2,R3);
 
     functionNum = 8;
 
     call MOD_0;
 
-    multipop(R0,R1,R2,R3);
+    multipop(R1,R2,R3);
 
     print word;
 
-    multipush(R0,R1,R2,R3);
+    multipush(R1,R2,R3);
 
     functionNum = 9;
 
     call MOD_0;
 
-    multipop(R0,R1,R2,R3);
+    multipop(R1,R2,R3);
 
     return;
 
@@ -35,7 +35,7 @@ if(functionNum == 4) then
 
     alias wordAddr R3; //for terminal read
 
-    multipush(R0,R1,R2,R3);
+    multipush(R1,R2,R3);
 
     functionNum = 8;
 
@@ -44,7 +44,7 @@ if(functionNum == 4) then
     
     call MOD_0;
 
-    multipop(R0,R1,R2,R3);
+    multipop(R1,R2,R3);
 
     read;
 
@@ -52,11 +52,11 @@ if(functionNum == 4) then
 
     //invoking the resource manager module as we are done using the terminal now so we will release the terminal lock
 
-    multipush(R0,R1,R2,R3);
+    multipush(R1,R2,R3);
 
     call MOD_5;
 
-    multipop(R0,R1,R2,R3);
+    multipop(R1,R2,R3);
 
     alias physicalWordAddr R4;
     physicalWordAddr = ([PTBR + 2 * (wordAddr/512)] * 512) + (wordAddr % 512);
@@ -80,11 +80,11 @@ if(functionNum == 2) then
     arg1 = 3; //acquire disk
     arg2 = currentPID;
 
-    multipush(R0,R1,R2,R3,R4);
+    multipush(R1,R2,R3,R4);
 
     call MOD_0;
 
-    multipop(R0,R1,R2,R3,R4);
+    multipop(R1,R2,R3,R4);
 
     [DISK_STATUS_TABLE + 1] = 0; //load
     [DISK_STATUS_TABLE + 2] = pageNumber; //page number
@@ -94,13 +94,21 @@ if(functionNum == 2) then
 
     [PROCESS_TABLE + currentPID * 16 + 4] = WAIT_DISK;
 
-    multipush(R0,R1,R2,R3,R4);
+    multipush(R1,R2,R3,R4);
 
     call MOD_5;
 
-    multipop(R0,R1,R2,R3,R4);
+    multipop(R1,R2,R3,R4);
 
     return;
 
 endif;
+
+//release disk
+if(functionNum == 4) then
+    //here R2 contains the block number
+    [DISK_FREE_LIST + R2] = [DISK_FREE_LIST + R2] - 1;
+    return;
+endif;
+
 
