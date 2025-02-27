@@ -48,7 +48,7 @@ else
 
         multipush(EPN);
         R1 = 5;
-        R2 = blockNumber;
+        R2 = codeBlockNum;
         call MOD_2;
 
         multipop(EPN); //calling memory manager

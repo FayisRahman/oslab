@@ -84,3 +84,28 @@ if (functionNumber == 4) then
     endwhile;
     return;
 endif;
+
+//get pcb entry
+if(functionNumber == 1) then
+
+    R0 = -1;
+    alias i R1;
+    i = 1;
+    while(i<16) do
+        if([PROCESS_TABLE + i*16 + 4] == TERMINATED) then
+            R0 = i;
+            break;
+        endif;
+        i = i + 1;
+    endwhile;
+
+    if(R0 != -1) then
+        [PROCESS_TABLE + i * 16 + 1] = i;
+        [PROCESS_TABLE + i * 16 + 4] = ALLOCATED;
+        [PROCESS_TABLE + i * 16 + 14] = PAGE_TABLE_BASE + i * 20;
+        [PROCESS_TABLE + i * 16 + 15] = 10;
+    endif;
+
+    return;
+
+endif;

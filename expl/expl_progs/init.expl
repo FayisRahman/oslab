@@ -6,9 +6,15 @@ decl
 enddecl
 begin
 
-    temp = exposcall("Read", -1 ,name);
-    temp = exposcall("Write", -2, name);
-    temp = exposcall("Exec", name);
+    temp = exposcall("Fork");
+    
+    if(temp != -1) then
+        if(temp == 0 ) then
+            temp = exposcall("Exec","even.xsm");
+        else
+            temp = exposcall("Exec" , "odd.xsm");
+        endif;
+    endif;
 
     return 0;
 end

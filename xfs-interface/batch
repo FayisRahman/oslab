@@ -7,8 +7,9 @@ load --init $HOME/myexpos/expl/expl_progs/init.xsm
 load --library $HOME/myexpos/expl/library.lib
 load --int=7 $HOME/myexpos/spl/spl_progs/sample_int7.xsm
 load --int=6 $HOME/myexpos/spl/spl_progs/interrupt_6.xsm
+load --int=8 $HOME/myexpos/spl/spl_progs/interrupt_8.xsm
 load --int=9 $HOME/myexpos/spl/spl_progs/interrupt_9.xsm
-load --int=10 $HOME/myexpos/spl/spl_progs/haltprog.xsm
+load --int=10 $HOME/myexpos/spl/spl_progs/exit_process.xsm
 load --exhandler $HOME/myexpos/spl/spl_progs/exhandler.xsm
 load --module 0 $HOME/myexpos/spl/spl_progs/module_0.xsm
 load --module 1 $HOME/myexpos/spl/spl_progs/module_1.xsm
@@ -18,4 +19,8 @@ load --module 5 $HOME/myexpos/spl/spl_progs/module_5.xsm
 load --module 7 $HOME/myexpos/spl/spl_progs/module_7.xsm
 rm linklist.xsm
 load --exec $HOME/myexpos/expl/expl_progs/linklist.xsm
+rm odd.xsm
+load --exec $HOME/myexpos/expl/expl_progs/odd.xsm
+rm even.xsm
+load --exec $HOME/myexpos/expl/expl_progs/even.xsm
 exit
