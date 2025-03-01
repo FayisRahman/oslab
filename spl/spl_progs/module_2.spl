@@ -9,6 +9,7 @@ if(functionNum == 1) then
     [SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] + 1; //Wait mem count
     
     while([SYSTEM_STATUS_TABLE + 2] == 0) do //that is until u get a free mem page
+        [PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE + 1] + 4] = WAIT_MEM;
         multipush(R1);
         call MOD_5; //calling scheduler
         multipop(R1);
@@ -17,8 +18,8 @@ if(functionNum == 1) then
     [SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] - 1; //Wait mem count
     [SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] - 1; //allocated a free page so decrease from total page
 
-    alias memPage R3;
-    memPage = 0;
+    alias memPage R2;
+    memPage = 76;
 
     while([MEMORY_FREE_LIST + memPage] > 0 && memPage < 128) do
         memPage = memPage + 1;

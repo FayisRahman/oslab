@@ -13,6 +13,10 @@ backup;
 
 multipush(EIP);
 
+print BP;
+print EIP;
+print [([PTBR + EIP/512] * 512) + EIP%512];
+
 if((EC != 0) || ([PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] == (PTLR * 512 - 1))) then
     if(EC == 0) then 
         print "Stack Overflow";

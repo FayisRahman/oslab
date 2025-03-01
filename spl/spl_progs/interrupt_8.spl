@@ -5,20 +5,21 @@ print "fork";
 alias userSP R0;
 userSP = SP;
 
+
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = SP;
 SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]* 16 + 11] * 512 - 1;
 
 //first we get new pid using getpcbentry from MOD_1
-
+multipush(R0);
 R1 = 1; //getpcbentry
 call MOD_1; //process manager
 
 alias newPID R1;
 newPID = R0;
 
+multipop(R0);
 
-
-if(R0 == -1) then //to pid left means that currently 16 (max no. of process) processes are running in the OS
+if(newPID == -1) then //to pid left means that currently 16 (max no. of process) processes are running in the OS
     [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
     [[PTBR + 2 * ((userSP - 1)/512)] * 512 + (userSP - 1) % 512] = -1;
     SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
@@ -58,7 +59,7 @@ else
     [new_PTBR + 19] = "0110";
 
     //now for user area page
-    multipop(R1,R2);
+    multipush(R1,R2);
     R1 = 1;
     call MOD_2;
     multipop(R1,R2);
@@ -70,7 +71,7 @@ else
     [PROCESS_TABLE + newPID * 16 + 6] = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 6]; //SWAP FLAG
     [PROCESS_TABLE + newPID * 16 + 10] = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 10]; //User Area Swap STATUS
     [PROCESS_TABLE + newPID * 16 + 7] = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 7]; //INODE INDEX
-    [PROCESS_TABLE + newPID * 16 + 13] = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13]; //USERID
+    [PROCESS_TABLE + newPID * 16 + 13] = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13]; //UPTR
 
 
     //setting some other fields
@@ -122,7 +123,7 @@ else
 
     //copying user stack
 
-    i = 17;
+    i = 16;
     alias j R4;
     j = 0;
 
@@ -135,6 +136,7 @@ else
         i = i + 2;
     endwhile;
 
+    
     [[PROCESS_TABLE + newPID * 16 + 11] * 512] = BP;
 
 
@@ -155,5 +157,7 @@ else
 
     SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
 endif;
+
+print "forking done";
 ireturn;
 
