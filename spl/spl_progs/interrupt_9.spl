@@ -33,6 +33,7 @@ while(i < MAX_FILE_NUM) do
         break;
     endif;
     i = i + 1;
+
 endwhile;
 
 if(i == MAX_FILE_NUM) then
@@ -44,13 +45,14 @@ if(i == MAX_FILE_NUM) then
     [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
     SP = userSP;
     ireturn;
+
 endif;
 
 //calling the exit process to terminate the current process
 alias inodeIndex R5;
 inodeIndex = i;
 
-multipush(R0,R1,R2,R3,R4,R5);
+multipush(R0,R1,R2,R3,R4,R5,R9);
 
 alias arg1 R1;
 alias arg2 R2;
@@ -58,9 +60,9 @@ alias arg2 R2;
 arg1 = 3;
 arg2 = [SYSTEM_STATUS_TABLE + 1];
 
-call MOD_1;
+call PROCESS_MANAGER;
 
-multipop(R0,R1,R2,R3,R4,R5);
+multipop(R0,R1,R2,R3,R4,R5,R9);
 
 alias userAreaPage R6;
 userAreaPage = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11];
@@ -69,7 +71,7 @@ userAreaPage = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11];
 
 [SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] - 1; //decrease MEM_FREE_COUNT
 
-SP = userAreaPage * 512;
+SP = userAreaPage * 512 - 1;
 
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 4] = RUNNING;
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 7] = inodeIndex;
@@ -82,33 +84,26 @@ SP = userAreaPage * 512;
 [PTBR + 2] = 64;
 [PTBR + 3] = "0100";
 
-multipush(R0,R1,R2,R3,R4,R5,R6);
-
 //setting the heap pages
-
-// arg1 = 1; //for get free page
-// call MOD_2;
 [PTBR + 4] = -1;
 [PTBR + 5] = "0000";
-
-// arg1 = 1; //for get free page
-// call MOD_2;
 [PTBR + 6] = -1;
 [PTBR + 7] = "0000";
 
 //stack pages
+multipush(R0,R1,R2,R3,R4,R5,R6,R9);
 
 arg1 = 1; //for get free page
-call MOD_2;
+call MEMORY_MANAGER;
 [PTBR + 16] = R0;
 [PTBR + 17] = "0110";
 
 arg1 = 1; //for get free page
-call MOD_2;
+call MEMORY_MANAGER;
 [PTBR + 18] = R0;
 [PTBR + 19] = "0110";
 
-multipop(R0,R1,R2,R3,R4,R5,R6);
+multipop(R0,R1,R2,R3,R4,R5,R6,R9);
 
 alias codeSize R7;
 codeSize = (([INODE_TABLE + inodeIndex * 16 + 2] - 1) / 512) + 1;
@@ -117,11 +112,13 @@ i = 0;
 
 while(i<4) do
     if(i == 0) then
-        multipush(R1,R2,R3,R4,R5,R6,R7);
+        multipush(R1,R2,R3,R4,R5,R6,R7,R9);
+
         arg1 = 5; //for get code page
         arg2 = [INODE_TABLE + inodeIndex * 16 + 8 + i];
-        call MOD_2;
-        multipop(R1,R2,R3,R4,R5,R6,R7);
+        call MEMORY_MANAGER;
+
+        multipop(R1,R2,R3,R4,R5,R6,R7,R9);
         [PTBR + 8 + 2 * i] = R0; 
         [PTBR + 9 + 2 * i] = "0100";
     else
@@ -133,7 +130,7 @@ endwhile;
 
 
 alias perProcessTable R8;
-perProcessTable = (userAreaPage + 1) * 512 - 16;
+perProcessTable = userAreaPage  * 512 + RESOURCE_TABLE_OFFSET;
 
 i = 0;
 while(i<16) do
@@ -156,7 +153,7 @@ inodeEntry = INODE_TABLE + inodeIndex * 16;
 
 i=0;
 while(i<10) do
-    if(i >= 4 && i <= 7 && i <= 4 + codeSize - 1) then //here codeSize - 1 means like if codeSize was 2 then we need to load 2 pages so we need to load from 4 to 5 so we are doing it that way
+    if(i >= 4 && i <= 7 && i <= (4 + codeSize - 1)) then //here codeSize - 1 means like if codeSize was 2 then we need to load 2 pages so we need to load from 4 to 5 so we are doing it that way
         [diskMapTable + i] = [inodeEntry + 8 + (i-4)]; //the usage of i-4 is because we want the i to start from 0 so that it starts from inodeEntry + 8 thats why we are doing it that way
     else
         [diskMapTable + i] = -1;

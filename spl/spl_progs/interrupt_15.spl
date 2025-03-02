@@ -1,0 +1,3 @@
+//shutdown
+print "halt called";    
+halt;

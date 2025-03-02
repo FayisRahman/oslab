@@ -58,6 +58,14 @@ if(functionNum == 2) then
     
 endif;
 
+//release block
+if(functionNum == 4) then
+    alias blockNumber R2;
+    alias currentPID R3;
+    
+    [DISK_FREE_LIST + blockNumber] = [DISK_FREE_LIST + blockNumber] - 1;
+    return;
+endif;
 
 //get code page
 if(functionNum == 5) then

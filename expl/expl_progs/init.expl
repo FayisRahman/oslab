@@ -1,72 +1,35 @@
-type
-List
-{
-    int data;
-    List next;
-}
-endtype
-            
-decl
-    List head;
-    int x, pid, temp, length;
-enddecl
-            
-int main()
-{
-decl
-    List p, q;
-    int i;
-enddecl
-            
-begin
-    temp = initialise();
-    head = null;
-    q = head;
 
-    length=1;
-    while (length <= 100)  do
-        p = Alloc();
-        p.data = length;
-        p.next = null;
-        
-        if (head == null) then
-            head = p;
-            q = p;
-        else
-            q.next = p;
-            q = q.next;
-        endif;
-                          
-        length = length+1;
-    endwhile;
-                      
-    pid = exposcall("Fork");
-    if(pid == 0) then
-        p = head;
-        while(p != null)  do
-            x = p.data;
-            temp = exposcall("Write",-2,x);
-            p = p.next;
-            if(p == null) then
-                break;
-            endif;
+int main(){
+    decl
+        int a,b,c;
+        str com;
+    enddecl
+    begin
+        while(1==1) do
+            b = exposcall("Write",-2,"----ENTER----");
             breakpoint;
-            p = p.next;
-            breakpoint;
-        endwhile;
-    else
-        q = head.next;
-        while(q != null)  do
-            x = q.data;
-            temp = exposcall("Write",-2,x);
-            q = q.next;
-            if(q == null) then
-                break;
+            b = exposcall("Read",-1,com);
+            if(com == "shutdown") then
+                b = exposcall("Shutdown");
+            else
+                b = exposcall("Fork");
+                if(b < 0) then
+                    b = exposcall("Write",-2,"Fork Failure");
+                    continue;
+                endif;
+                if(b == 0) then
+                    b = exposcall("Exec",com);
+                    if(b < 0) then
+                        b = exposcall("Write",-2,"BAD COMMAND");
+                    endif;
+                    b = exposcall("Write",-2,"process done");
+                    c = exposcall("Signal");
+                else
+                    c = exposcall("Wait",b);
+                endif;
             endif;
-            q = q.next;
         endwhile;
-    endif;
-                
-    return 0;
-end
+        c = exposcall("Write",-2,"--Gud Bye--");
+        return 0;
+    end
 }
