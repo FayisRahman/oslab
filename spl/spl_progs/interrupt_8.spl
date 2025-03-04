@@ -90,10 +90,16 @@ else
 
     alias i R3;
     i =  512 - 16;
-    while(i < 512) do
 
-        [[PROCESS_TABLE + newPID * 16 + 11] * 512 + i] = [[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 + i];
-        i = i + 1;
+    alias entry R4;
+    while(i < 512) do
+        entry = [PROCESS_TABLE + newPID * 16 + 11] * 512 + i;
+        [entry] = [[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 + i];
+        [entry + 1] = [[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 + i + 1];
+        if([entry] == SEMAPHORE) then
+            [SEMAPHORE_TABLE + 4 * [entry + 1] + 1] = [SEMAPHORE_TABLE + 4 * [entry + 1] + 1] + 1;
+        endif;
+        i = i + 2;
 
     endwhile;
 

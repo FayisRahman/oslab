@@ -117,6 +117,9 @@ if(functionNum == 5) then
     R4 = blockNum; //block number
     R2 = [SYSTEM_STATUS_TABLE + 1]; //current PID //here why we put R4 before R2 was that we are using R2 for blockNum in this fucntion scope but the parameters of the next funtion which is disk load requires R2 to be currentPID and R4 as block number so first we put R4 = R2 then R2 = currentPID;
     R3 = memPageNum; //page number
+
+    print R4;
+    print R3;
      
     call MOD_4;
 

@@ -1,7 +1,6 @@
 //exception handler
 
-print "Exception Handler";
-// breakpoint;
+//breakpoint;
 
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = -1;
 
@@ -12,7 +11,6 @@ SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 - 1;
 backup;
 
 multipush(EIP);
-
 
 if((EC != 0) || ([PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] == (PTLR * 512 - 1))) then
     if(EC == 0) then 
@@ -28,36 +26,35 @@ if((EC != 0) || ([PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] == (PTLR 
         print "Arithemetic Exception";
     endif;
 
-    multipush (R0,R1,R2);
     R1 = 3;
     R2 = [SYSTEM_STATUS_TABLE + 1];
     call MOD_1;
 
     call MOD_5;
 
-    multipop(R0,R1,R2);
 
 else 
 
     //if reach here then issue due to page fault..
 
     //so now we need to see if its cause code page hasnt been loaded so for that we check the EPN (error page no.)
-
+   
     if(EPN > 3 && EPN < 8) then //means its due to code page
         alias codeBlockNum R2;
         codeBlockNum = [DISK_MAP_TABLE + [SYSTEM_STATUS_TABLE + 1]*10 + EPN];
-
+        multipush(R0,R1,R2);
         multipush(EPN);
+        
         R1 = 5;
         R2 = codeBlockNum;
         call MOD_2;
-
+        R4 = R0;
+        
         multipop(EPN); //calling memory manager
-
-        [PTBR + EPN * 2] = R0;
-        [PTBR + ( EPN * 2 ) + 1] = "1100" ;
-
         multipop(R0,R1,R2);
+
+        [PTBR + EPN * 2] = R4;
+        [PTBR + EPN * 2  + 1] = "1100";
 
     else //means its due to heap page
         print "heap alloc";

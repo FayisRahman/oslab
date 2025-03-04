@@ -14,8 +14,8 @@ SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 - 1;
 alias physicalPageNum R1;
 alias offset R2;
 alias fileName R3;
+alias page_table R5;
 
-alias page_table R9;
 page_table = PAGE_TABLE_BASE + 20 * [SYSTEM_STATUS_TABLE + 1];
 
 
@@ -49,7 +49,7 @@ if(i == MAX_FILE_NUM) then
 endif;
 
 //calling the exit process to terminate the current process
-alias inodeIndex R5;
+alias inodeIndex R9;
 inodeIndex = i;
 
 multipush(R0,R1,R2,R3,R4,R5,R9);
@@ -57,7 +57,7 @@ multipush(R0,R1,R2,R3,R4,R5,R9);
 alias arg1 R1;
 alias arg2 R2;
 
-arg1 = 3;
+arg1 = 3; //exit process
 arg2 = [SYSTEM_STATUS_TABLE + 1];
 
 call PROCESS_MANAGER;
@@ -105,20 +105,46 @@ call MEMORY_MANAGER;
 
 multipop(R0,R1,R2,R3,R4,R5,R6,R9);
 
+//----setting up the disk map table-----
+//In this what we really want it the code pages disk location so that information will be available in the inode table entry of that process
+//so that we can load the pages from disk to memory when needed
+//so we are setting the disk map table entry for the code pages
+
+
+alias diskMapTable R11;
+diskMapTable = DISK_MAP_TABLE + 10 * [SYSTEM_STATUS_TABLE + 1];
+
+alias inodeEntry R10;
+inodeEntry = INODE_TABLE + inodeIndex * 16;
+
 alias codeSize R7;
 codeSize = (([INODE_TABLE + inodeIndex * 16 + 2] - 1) / 512) + 1;
+
+
+i=2;
+while(i<10) do
+    if(i >= 4 && i <= 7 && i <= (4 + codeSize - 1)) then //here codeSize - 1 means like if codeSize was 2 then we need to load 2 pages so we need to load from 4 to 5 so we are doing it that way
+        [diskMapTable + i] = [inodeEntry + 8 + (i-4)]; //the usage of i-4 is because we want the i to start from 0 so that it starts from inodeEntry + 8 thats why we are doing it that way
+    else
+        [diskMapTable + i] = -1;
+    endif;
+    i = i + 1;
+endwhile;
+
+
 
 i = 0;
 
 while(i<4) do
     if(i == 0) then
-        multipush(R1,R2,R3,R4,R5,R6,R7,R9);
+        multipush(R1,R2,R3,R4,R5,R6,R7,R9,R10,R11);
 
         arg1 = 5; //for get code page
         arg2 = [INODE_TABLE + inodeIndex * 16 + 8 + i];
+
         call MEMORY_MANAGER;
 
-        multipop(R1,R2,R3,R4,R5,R6,R7,R9);
+        multipop(R1,R2,R3,R4,R5,R6,R7,R9,R10,R11);
         [PTBR + 8 + 2 * i] = R0; 
         [PTBR + 9 + 2 * i] = "0100";
     else
@@ -135,31 +161,10 @@ perProcessTable = userAreaPage  * 512 + RESOURCE_TABLE_OFFSET;
 i = 0;
 while(i<16) do
     [perProcessTable + i] = -1;
-    i = i + 1;
+    i = i + 2;
 endwhile;
 
-//----setting up the disk map table-----
-//In this what we really want it the code pages disk location so that information will be available in the inode table entry of that process
-//so that we can load the pages from disk to memory when needed
-//so we are setting the disk map table entry for the code pages
 
-
-alias diskMapTable R9;
-diskMapTable = DISK_MAP_TABLE + 16 * [SYSTEM_STATUS_TABLE + 1];
-
-alias inodeEntry R10;
-inodeEntry = INODE_TABLE + inodeIndex * 16;
-
-
-i=0;
-while(i<10) do
-    if(i >= 4 && i <= 7 && i <= (4 + codeSize - 1)) then //here codeSize - 1 means like if codeSize was 2 then we need to load 2 pages so we need to load from 4 to 5 so we are doing it that way
-        [diskMapTable + i] = [inodeEntry + 8 + (i-4)]; //the usage of i-4 is because we want the i to start from 0 so that it starts from inodeEntry + 8 thats why we are doing it that way
-    else
-        [diskMapTable + i] = -1;
-    endif;
-    i = i + 1;
-endwhile;
 
 [[PTBR + 16]*512] = [[PTBR + 8]*512 + 1];
 
