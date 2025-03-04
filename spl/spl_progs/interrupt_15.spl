@@ -1,3 +1,2 @@
-[TERMINAL_STATUS_TABLE + 2] = [TERMINAL_STATUS_TABLE + 2] + 1; //for assg3..checking kernel to usermode
 //shutdown
 halt;
