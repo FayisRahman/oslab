@@ -1,0 +1,10 @@
+[TERMINAL_STATUS_TABLE + 2] = [TERMINAL_STATUS_TABLE + 2] + 1; //for assg3..checking kernel to usermode
+//shutdown
+print "halt called";
+print "max mem usage:";
+print R14;
+print "mode switches:";
+print [TERMINAL_STATUS_TABLE + 2];
+print "context switches";
+print [TERMINAL_STATUS_TABLE + 3];  
+halt;

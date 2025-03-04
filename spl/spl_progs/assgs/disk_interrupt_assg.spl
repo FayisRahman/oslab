@@ -1,0 +1,30 @@
+[TERMINAL_STATUS_TABLE + 2] = [TERMINAL_STATUS_TABLE + 2] + 1; //for assg3..checking kernel to usermode
+//DISK INTERRUPT HANDLER
+// breakpoint;
+
+print "Disk Int";
+
+[TERMINAL_STATUS_TABLE + 2] = [TERMINAL_STATUS_TABLE + 2] + 1; //for assg2 to get the no. of disk access
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = SP;
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 - 1;
+
+backup;
+
+[DISK_STATUS_TABLE + 0] = 0; //status
+
+alias i R1;
+i=0;
+while(i < 16) do
+    if([PROCESS_TABLE + i * 16 + 4] == WAIT_DISK) then
+        [PROCESS_TABLE + i * 16 + 4] = READY;
+    endif;
+    i = i + 1;
+endwhile;
+
+restore;
+
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
+print "Disk Ove";
+
+ireturn;

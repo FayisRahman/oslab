@@ -1,3 +1,5 @@
+[TERMINAL_STATUS_TABLE + 2] = [TERMINAL_STATUS_TABLE + 2] + 1; //for assg3..checking kernel to usermode
+
 alias userSP R0;
 userSP = SP;
 
@@ -25,8 +27,6 @@ if(syscallNum == 17) then
         i = i + 1;
     endwhile;
 
-    print "--1--";
-
     if (i == 8) then // no space
         [[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;
     else
@@ -45,7 +45,6 @@ if(syscallNum == 17) then
         endif;
     endif;
 
-    print "--2--";
     breakpoint;
 endif;
 

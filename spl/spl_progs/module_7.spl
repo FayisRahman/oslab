@@ -213,6 +213,4 @@ while(i<MAX_SEM_COUNT) do
     i = i + 1;
 endwhile;
 
-
-
 return;

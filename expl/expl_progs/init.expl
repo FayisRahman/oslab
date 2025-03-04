@@ -6,6 +6,7 @@ int main(){
     enddecl
     begin
         while(1==1) do
+            
             b = exposcall("Write",-2,"----ENTER----");
             breakpoint;
             b = exposcall("Read",-1,com);
@@ -26,6 +27,7 @@ int main(){
                     c = exposcall("Signal");
                 else
                     c = exposcall("Wait",b);
+                    c = exposcall("Shutdown");
                 endif;
             endif;
         endwhile;

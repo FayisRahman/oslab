@@ -1,0 +1,53 @@
+[TERMINAL_STATUS_TABLE + 2] = [TERMINAL_STATUS_TABLE + 2] + 1; //for assg3..checking kernel to usermode
+
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP; 
+
+// Setting SP to UArea Page number * 512 - 1
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
+
+//for assg2
+// memory task manager -> check each time for the total number of pages used and store if higher
+multipush(R10,R11,R12);
+alias counter R10;
+alias memUsage R11;
+
+counter = 0;
+memUsage = 0;
+while (counter < NUM_MEM_PAGES) do
+    if ([MEMORY_FREE_LIST+counter] != 0) then
+        memUsage = memUsage + 1;
+    endif;
+    counter = counter+1;
+endwhile;
+
+alias prevMemUsage R14;
+if (memUsage >= prevMemUsage) then 
+    prevMemUsage = memUsage;
+endif;
+
+
+multipop(R10,R11);
+
+
+
+backup;
+
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 4] = READY;
+
+alias i R0;
+i=0;
+while(i<16) do
+	if([PROCESS_TABLE + i * 16 + 4] != TERMINATED) then
+		[PROCESS_TABLE + i* 16 + 0] = [PROCESS_TABLE + i*16 + 0] + 1;
+	endif;
+	i = i + 1;
+endwhile;
+call MOD_5;
+
+
+restore;
+
+SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+
+
+ireturn;

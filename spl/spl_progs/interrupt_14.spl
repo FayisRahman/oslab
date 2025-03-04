@@ -1,3 +1,4 @@
+[TERMINAL_STATUS_TABLE + 2] = [TERMINAL_STATUS_TABLE + 2] + 1; //for assg3..checking kernel to usermode
 //semlock and semUnlock
 alias userSP R0;
 userSP = SP;
@@ -31,7 +32,6 @@ semID = [resource_table + semfd * 2 + 1];
 
 //SemLock 19
 if(syscallNum == INT_SEMLOCK) then
-    
     [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = INT_SEMLOCK;
 
     while([SEMAPHORE_TABLE + semID * 4] != -1 && [SEMAPHORE_TABLE + semID * 4] != [SYSTEM_STATUS_TABLE + 1]) do
@@ -48,6 +48,7 @@ if(syscallNum == INT_SEMLOCK) then
     endwhile;
 
     [SEMAPHORE_TABLE + semID * 4 ] = [SYSTEM_STATUS_TABLE + 1];
+
 
 endif;
 

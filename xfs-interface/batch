@@ -33,8 +33,4 @@ rm fork3.xsm
 load --exec $HOME/myexpos/expl/expl_progs/fork3.xsm
 rm rwAsg1.xsm
 load --exec $HOME/myexpos/expl/expl_progs/rwAsg1.xsm
-rm assg2p.xsm
-load --exec $HOME/myexpos/expl/expl_progs/assg2p.xsm
-rm assg2ch.xsm
-load --exec $HOME/myexpos/expl/expl_progs/assg2ch.xsm
 exit
