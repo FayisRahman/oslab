@@ -31,6 +31,5 @@ rm pid.xsm
 load --exec $HOME/myexpos/expl/expl_progs/pid.xsm
 rm fork3.xsm
 load --exec $HOME/myexpos/expl/expl_progs/fork3.xsm
-rm rwAsg1.xsm
-load --exec $HOME/myexpos/expl/expl_progs/rwAsg1.xsm
+
 exit
