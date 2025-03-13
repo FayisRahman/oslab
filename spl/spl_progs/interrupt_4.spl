@@ -17,13 +17,15 @@ fileName = [([PTBR + 2 * ((userSP-4)/512)] * 512 + ((userSP-4)%512))];
 alias permission R4;
 permission = [([PTBR + 2 * ((userSP-3)/512)] * 512 + ((userSP-3)%512))];
 
+alias i R5;
+
 //create
 if(syscallNum == 1) then
 
     [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 1; //create syscall
 
     //checking if a file exists with the filename
-    alias i R5;
+    
     i = 0;
     while(i<MAX_FILE_NUM) do
         if([INODE_TABLE + i * 16 + 1] == fileName) then
@@ -38,7 +40,7 @@ if(syscallNum == 1) then
         //no file with filename so now we find a free slot to add the file
         i = 0;
         while(i<MAX_FILE_NUM) do
-            if([INODE_TABLE + i * 16 + 1] == fileName) then //checking filename entry
+            if([INODE_TABLE + i * 16 + 1] == -1) then //checking filename entry
                 break;
             endif;
             i = i + 1;
@@ -71,12 +73,11 @@ if(syscallNum == 1) then
 endif;
 
 //delete
-if(syscallNum == 5) then
+if(syscallNum == 4) then
 
     [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 4; //create syscall
 
     //checking if a file exists with the filename
-    alias i R4;
     i = 0;
     while(i<MAX_FILE_NUM) do
         if([INODE_TABLE + i * 16 + 1] == fileName) then
@@ -86,6 +87,7 @@ if(syscallNum == 5) then
     endwhile;
 
     if(i == MAX_FILE_NUM) then //file not present in the disk
+        print "file no exist";
         [returnAddress] = 0;
     else 
         if([INODE_TABLE + i * 16 + 0] != DATA) then //file present is not DATA file type
@@ -97,56 +99,59 @@ if(syscallNum == 5) then
                 //now we start deleting
                 //for that we need to accquire the inode lock
 
-                multipush(R0,R1,R2,R3,R4);
+                multipush(R1,R2,R3,R4,R5);
                 R1 = 4; //accquiring inode
                 R2 = i; //inode entry
                 R3 = [SYSTEM_STATUS_TABLE + 1]; //pid
                 call RESOURCE_MANAGER;
-                multipop(R0,R1,R2,R3,R4);
+                multipop(R1,R2,R3,R4,R5);
 
                 if( [FILE_STATUS_TABLE + i * 4 + 1] != -1 ) then //file is open
-                    multipush(R0,R1,R2,R3,R4);
+                    multipush(R1,R2,R3,R4,R5);
                     R1 = 5; //releasing inode
                     R2 = i; //inode entry
                     R3 = [SYSTEM_STATUS_TABLE + 1]; //pid
                     call RESOURCE_MANAGER;
-                    multipop(R0,R1,R2,R3,R4);
+                    multipop(R1,R2,R3,R4,R5);
 
                     [returnAddress] = -2;
                     
                 else
 
                     //file is not open
-                    alias blkoffset R5;
-                    blkoffset = 8;
-                    alias bufferIdx R6;
-
-                    while([INODE_TABLE + i*16 + blkoffset] != -1 && (blkoffset < 8 + 4)) do
-                        
+                    alias blkNum R6;
+                    blkNum = INODE_TABLE + i*16 + 8;
+                    alias bufferIdx R7;
+                    multipush(R5);
+                    i = blkNum + 4;//max 4 blocks
+                    while(blkNum < i) do
+                        if ([blkNum] == -1) then
+                            break;
+                        endif;
                         //checking the dirty bit
-                        bufferIdx = [INODE_TABLE + i*16 + blkoffset] % MAX_BUFFER;
+                        bufferIdx = [blkNum] % MAX_BUFFER;
 
-                        if([BUFFER_TABLE + bufferIdx * 4 + 0] == [INODE_TABLE + i*16 + blkoffset] && [BUFFER_TABLE + bufferIdx * 4 + 1] == 1) then // checking if dirt birt is set
+                        if([BUFFER_TABLE + bufferIdx * 4 + 0] == [blkNum] && [BUFFER_TABLE + bufferIdx * 4 + 1] == 1) then // checking if dirt birt is set
                             [BUFFER_TABLE + bufferIdx * 4 + 1] = 0;
                         endif ;
                         
                         //release block
-                        multipush(R0,R1,R2,R3,R4,R5,R6);
+                        multipush(R1,R2,R3,R4,R5,R6);
                         R1 = 4; //releasing block
-                        R2 = [INODE_TABLE + i*16 + blkoffset]; // blkNum
+                        R2 = [blkNum]; // blkNum
                         R3 = [SYSTEM_STATUS_TABLE + 1]; //pid
                         call MEMORY_MANAGER;
-                        multipop(R0,R1,R2,R3,R4,R5,R6);
+                        multipop(R1,R2,R3,R4,R5,R6);
 
-                        blkoffset = blkoffset + 1;
+                        blkNum = blkNum + 1;
 
                     endwhile;
-                    
+                    multipop(R5); //reason why i did this was to get the value of "i" back as here i holds the value of the index of the inode of the dat file 
                     //invalidating inodePages
-                    alias inodePages R7;
+                    alias inodePages R8;
                     inodePages = INODE_TABLE + i*16;
 
-                    alias limit R8;
+                    alias limit R9;
                     limit = inodePages + 16;
 
                     while (inodePages < limit) do
@@ -155,7 +160,7 @@ if(syscallNum == 5) then
                     endwhile;
 
                     //invalidating root entry
-                    alias rootFile R9;
+                    alias rootFile R10;
                     rootFile = ROOT_FILE + 8 * i;
                     limit = rootFile + 8;
                     while (rootFile < limit) do
@@ -164,12 +169,12 @@ if(syscallNum == 5) then
                     endwhile;
                     
                     //release inode lock
-                    multipush(R10);
+                    multipush(R2);
                     R1 = 5; //releasing inode lock
                     R2 = i; // blkNum
                     R3 = [SYSTEM_STATUS_TABLE + 1]; //pid
                     call RESOURCE_MANAGER;
-                    multipop(R10);
+                    multipop(R2);
 
                     [returnAddress] = 0;
                 endif;

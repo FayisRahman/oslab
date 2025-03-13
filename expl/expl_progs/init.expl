@@ -1,33 +1,29 @@
-
-int main(){
+int main() {
     decl
-        int a,b,c;
-        str com;
+        int temp, pid,c;
+        string input;
     enddecl
     begin
-        while(1==1) do
-            
-            b = exposcall("Write",-2,"----ENTER----");
-            breakpoint;
-            b = exposcall("Read",-1,com);
-            if(com == "shutdown") then
-                b = exposcall("Shutdown");
+        while (3 == 3) do
+            temp = exposcall("Write", -2, ">>");
+            temp = exposcall("Read", -1, input);
+            if (input == "Shutdown") then
+                temp = exposcall("Shutdown");
+                break;
             else
-                b = exposcall("Fork");
-                if(b < 0) then
-                    b = exposcall("Write",-2,"Fork Failure");
+                pid = exposcall("Fork");
+                if (pid < 0) then
+                    temp = exposcall("Write", -2, "Fork Failure");
                     continue;
                 endif;
-                if(b == 0) then
-                    b = exposcall("Exec",com);
-                    if(b < 0) then
-                        b = exposcall("Write",-2,"BAD COMMAND");
+                if (pid == 0) then
+                    temp = exposcall("Exec", input);
+                    if (temp != 0) then
+                        temp = exposcall("Write", -2, "BAD COMMAND");
+                        break;
                     endif;
-                    b = exposcall("Write",-2,"process done");
-                    c = exposcall("Signal");
                 else
-                    c = exposcall("Wait",b);
-                    c = exposcall("Shutdown");
+                    temp = exposcall("Wait", pid);
                 endif;
             endif;
         endwhile;
