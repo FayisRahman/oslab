@@ -1,6 +1,4 @@
 //create-1 and delete-4 syscall
-
-
 alias userSP R0;
 userSP = SP;
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = SP;
@@ -13,16 +11,16 @@ syscallNum = [([PTBR + 2 * ((userSP-5)/512)] * 512 + ((userSP-5)%512))];
 alias returnAddress R2;
 returnAddress = ([PTBR + 2 * ((userSP-1)/512)] * 512 + ((userSP-1)%512));
 
+alias fileName R3;
+fileName = [([PTBR + 2 * ((userSP-4)/512)] * 512 + ((userSP-4)%512))];
+
+alias permission R4;
+permission = [([PTBR + 2 * ((userSP-3)/512)] * 512 + ((userSP-3)%512))];
+
 //create
 if(syscallNum == 1) then
 
     [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 1; //create syscall
-
-    alias fileName R3;
-    fileName = [([PTBR + 2 * ((userSP-4)/512)] * 512 + ((userSP-4)%512))];
-
-    alias permission R4;
-    permission = [([PTBR + 2 * ((userSP-3)/512)] * 512 + ((userSP-3)%512))];
 
     //checking if a file exists with the filename
     alias i R5;
@@ -36,38 +34,34 @@ if(syscallNum == 1) then
 
     if(i != MAX_FILE_NUM) then //file present in the disk
         [returnAddress] = 0;
-        SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
-        [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
-        ireturn;
-    endif;
-
-    //no file with filename so now we find a free slot to add the file
-    i = 0;
-    while(i<MAX_FILE_NUM) do
-        if([INODE_TABLE + i * 16 + 1] == fileName) then //checking filename entry
-            break;
-        endif;
-        i = i + 1;
-    endwhile;
-
-    if(i == MAX_FILE_NUM) then //no free space
-        [returnAddress] = -1;
     else
-        //setting the inode table
-        [INODE_TABLE + i * 16 + 0] = DATA; //file type
-        [INODE_TABLE + i * 16 + 1] = fileName;
-        [INODE_TABLE + i * 16 + 2] = 0; //file size
+        //no file with filename so now we find a free slot to add the file
+        i = 0;
+        while(i<MAX_FILE_NUM) do
+            if([INODE_TABLE + i * 16 + 1] == fileName) then //checking filename entry
+                break;
+            endif;
+            i = i + 1;
+        endwhile;
 
-        [INODE_TABLE + i * 16 + 3] = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 3] //USERID
-        [INODE_TABLE + i * 16 + 4] = permission;
+        if(i == MAX_FILE_NUM) then //no free space
+            [returnAddress] = -1;
+        else
+            //setting the inode table
+            [INODE_TABLE + i * 16 + 0] = DATA; //file type
+            [INODE_TABLE + i * 16 + 1] = fileName;
+            [INODE_TABLE + i * 16 + 2] = 0; //file size
+            [INODE_TABLE + i * 16 + 3] = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 3]; //USERID
+            [INODE_TABLE + i * 16 + 4] = permission;
 
-        //setting the Root table
-        [ROOT_TABLE + i * 8 + 0] = [INODE_TABLE + i * 16 + 1]; //fileName
-        [ROOT_TABLE + i * 8 + 1] = [INODE_TABLE + i * 16 + 2]; //file size
-        [ROOT_TABLE + i * 8 + 2] = [INODE_TABLE + i * 16 + 0]; //file type
-        [ROOT_TABLE + i * 8 + 3] = [INODE_TABLE + i * 16 + 3]; //USERID
-        [ROOT_TABLE + i * 8 + 4] = [INODE_TABLE + i * 16 + 4]; //permission
-        
+            //setting the Root table
+            [ROOT_FILE + i * 8 + 0] = [INODE_TABLE + i * 16 + 1]; //fileName
+            [ROOT_FILE + i * 8 + 1] = [INODE_TABLE + i * 16 + 2]; //file size
+            [ROOT_FILE + i * 8 + 2] = [INODE_TABLE + i * 16 + 0]; //file type
+            [ROOT_FILE + i * 8 + 3] = [INODE_TABLE + i * 16 + 3]; //USERID
+            [ROOT_FILE+ i * 8 + 4] = [INODE_TABLE + i * 16 + 4]; //permission
+            
+        endif;
     endif;
 
     SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
@@ -81,9 +75,6 @@ if(syscallNum == 5) then
 
     [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 4; //create syscall
 
-    alias fileName R3;
-    fileName = [([PTBR + 2 * ((userSP-4)/512)] * 512 + ((userSP-4)%512))];
-
     //checking if a file exists with the filename
     alias i R4;
     i = 0;
@@ -96,107 +87,95 @@ if(syscallNum == 5) then
 
     if(i == MAX_FILE_NUM) then //file not present in the disk
         [returnAddress] = 0;
-        SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
-        [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
-        ireturn;
+    else 
+        if([INODE_TABLE + i * 16 + 0] != DATA) then //file present is not DATA file type
+            [returnAddress] = -1;    
+        else 
+            if( [INODE_TABLE + i * 16 + 4] == 0 && [INODE_TABLE + i * 16 + 3] != [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 3] ) then //exclusive permission is set and userID is same as the userID in the inode entry
+                [returnAddress] = -1;
+            else
+                //now we start deleting
+                //for that we need to accquire the inode lock
+
+                multipush(R0,R1,R2,R3,R4);
+                R1 = 4; //accquiring inode
+                R2 = i; //inode entry
+                R3 = [SYSTEM_STATUS_TABLE + 1]; //pid
+                call RESOURCE_MANAGER;
+                multipop(R0,R1,R2,R3,R4);
+
+                if( [FILE_STATUS_TABLE + i * 4 + 1] != -1 ) then //file is open
+                    multipush(R0,R1,R2,R3,R4);
+                    R1 = 5; //releasing inode
+                    R2 = i; //inode entry
+                    R3 = [SYSTEM_STATUS_TABLE + 1]; //pid
+                    call RESOURCE_MANAGER;
+                    multipop(R0,R1,R2,R3,R4);
+
+                    [returnAddress] = -2;
+                    
+                else
+
+                    //file is not open
+                    alias blkoffset R5;
+                    blkoffset = 8;
+                    alias bufferIdx R6;
+
+                    while([INODE_TABLE + i*16 + blkoffset] != -1 && (blkoffset < 8 + 4)) do
+                        
+                        //checking the dirty bit
+                        bufferIdx = [INODE_TABLE + i*16 + blkoffset] % MAX_BUFFER;
+
+                        if([BUFFER_TABLE + bufferIdx * 4 + 0] == [INODE_TABLE + i*16 + blkoffset] && [BUFFER_TABLE + bufferIdx * 4 + 1] == 1) then // checking if dirt birt is set
+                            [BUFFER_TABLE + bufferIdx * 4 + 1] = 0;
+                        endif ;
+                        
+                        //release block
+                        multipush(R0,R1,R2,R3,R4,R5,R6);
+                        R1 = 4; //releasing block
+                        R2 = [INODE_TABLE + i*16 + blkoffset]; // blkNum
+                        R3 = [SYSTEM_STATUS_TABLE + 1]; //pid
+                        call MEMORY_MANAGER;
+                        multipop(R0,R1,R2,R3,R4,R5,R6);
+
+                        blkoffset = blkoffset + 1;
+
+                    endwhile;
+                    
+                    //invalidating inodePages
+                    alias inodePages R7;
+                    inodePages = INODE_TABLE + i*16;
+
+                    alias limit R8;
+                    limit = inodePages + 16;
+
+                    while (inodePages < limit) do
+                        [inodePages] = -1;
+                        inodePages = inodePages + 1;
+                    endwhile;
+
+                    //invalidating root entry
+                    alias rootFile R9;
+                    rootFile = ROOT_FILE + 8 * i;
+                    limit = rootFile + 8;
+                    while (rootFile < limit) do
+                        [rootFile] = -1;
+                        rootFile = rootFile + 1;
+                    endwhile;
+                    
+                    //release inode lock
+                    multipush(R10);
+                    R1 = 5; //releasing inode lock
+                    R2 = i; // blkNum
+                    R3 = [SYSTEM_STATUS_TABLE + 1]; //pid
+                    call RESOURCE_MANAGER;
+                    multipop(R10);
+
+                    [returnAddress] = 0;
+                endif;
+            endif;
+        endif;
     endif;
-
-    if([INODE_TABLE + i * 16 + 0] != DATA) then //file present is not DATA file type
-        [returnAddress] = -1;
-        SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
-        [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
-        ireturn;
-    endif;
-
-    if( [INODE_TABLE + i * 16 + 4] == 0  ) then //exclusive permission is set
-        if([INODE_TABLE + i * 16 + 3] != [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 3]) then //userID is same as the userID in the inode entry
-            [returnAddress] = -1;
-            SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
-            [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
-            ireturn;
-        endif ;
-    endif;
-
-    //now we start deleting
-
-    //for that we need to accquire the inode lock
-
-    multipush(R0,R1,R2,R3,R4);
-    R1 = 4; //accquiring inode
-    R2 = i; //inode entry
-    R3 = [SYSTEM_STATUS_TABLE + 1]; //pid
-    call RESOURCE_MANAGER;
-    multipop(R0,R1,R2,R3,R4);
-
-    if( [FILE_STATUS_TABLE + i * 4 + 1] != -1 ) then //file is open
-        multipush(R0,R1,R2,R3,R4);
-        R1 = 5; //releasing inode
-        R2 = i; //inode entry
-        R3 = [SYSTEM_STATUS_TABLE + 1]; //pid
-        call RESOURCE_MANAGER;
-        multipop(R0,R1,R2,R3,R4);
-
-        [returnAddress] = -2;
-        SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
-        [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
-        ireturn;
-
-    endif;
-
-    //file is not open
-
-    alias blkoffset R5;
-    blkoffset = 8;
-
-    alias bufferIdx R6;
-    while([INODE_TABLE + i*16 + blkoffset] != -1 && (blkoffset < 8 + 4)) do
-        
-        //checking the dirty bit
-        bufferIdx = [INODE_TABLE + i*16 + blkoffset] % MAX_BUFFER;
-
-        if([BUFFER_TABLE + bufferIdx * 4 + 0] == [INODE_TABLE + i*16 + blkoffset] && [BUFFER_TABLE + bufferIdx * 4 + 1] == 1) then // checking if dirt birt is set
-            [BUFFER_TABLE + bufferIndex * 4 + 1] = 0;
-        endif ;
-        
-        //release block
-        multipush(R0,R1,R2,R3,R4,R5,R6);
-        R1 = 4; releasing block
-        R2 = [INODE_TABLE + i*16 + blkoffset]; // blkNum
-        R3 = [SYSTEM_STATUS_TABLE + 1]; //pid
-        call MEMORY_MANAGER;
-        multipop(R0,R1,R2,R3,R4,R5,R6);
-
-        blkoffset = blkoffset + 1;
-
-    endwhile;
-    
-    //invalidating inodePages
-    alias inodePages R7;
-    inodePages = INODE_TABLE + i*16;
-    limit = inodePages + 16;
-    while (inodePages < limit) do
-        [inodePages] = -1;
-        inodePages = inodePages + 1;
-    endwhile;
-
-    //invalidating root entry
-    alias rootFile R8;
-    rootFile = ROOT_FILE + 8 * i;
-    limit = rootFile + 8;
-    while (rootFile < limit) do
-        [rootFile] = -1;
-        rootFile = rootFile + 1;
-    endwhile;
-    
-    //release inode lock
-    multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8);
-    R1 = 5; releasing inode lock
-    R2 = i; // blkNum
-    R3 = [SYSTEM_STATUS_TABLE + 1]; //pid
-    call RESOURCE_MANAGER;
-    multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8);
-
-    [returnAddress] = 0;
     SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
     [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
     ireturn;

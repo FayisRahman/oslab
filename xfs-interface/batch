@@ -1,10 +1,11 @@
 load --os $HOME/myexpos/spl/spl_progs/os_startup.xsm
-load --int=timer $HOME/myexpos/spl/spl_progs/sample_timer.xsm
-load --int=console $HOME/myexpos/spl/spl_progs/console_interrupt.xsm
-load --int=disk $HOME/myexpos/spl/spl_progs/disk_interrupt.xsm
 load --idle $HOME/myexpos/expl/expl_progs/idle_process.xsm
 load --init $HOME/myexpos/expl/expl_progs/init.xsm
 load --library $HOME/myexpos/expl/library.lib
+load --int=timer $HOME/myexpos/spl/spl_progs/sample_timer.xsm
+load --int=console $HOME/myexpos/spl/spl_progs/console_interrupt.xsm
+load --int=disk $HOME/myexpos/spl/spl_progs/disk_interrupt.xsm
+load --int=4 $HOME/myexpos/spl/spl_progs/interrupt_4.xsm
 load --int=7 $HOME/myexpos/spl/spl_progs/sample_int7.xsm
 load --int=6 $HOME/myexpos/spl/spl_progs/interrupt_6.xsm
 load --int=8 $HOME/myexpos/spl/spl_progs/interrupt_8.xsm
@@ -21,15 +22,6 @@ load --module 2 $HOME/myexpos/spl/spl_progs/module_2.xsm
 load --module 4 $HOME/myexpos/spl/spl_progs/module_4.xsm
 load --module 5 $HOME/myexpos/spl/spl_progs/module_5.xsm
 load --module 7 $HOME/myexpos/spl/spl_progs/module_7.xsm
-rm linklist.xsm
-load --exec $HOME/myexpos/expl/expl_progs/linklist.xsm
-rm odd.xsm
-load --exec $HOME/myexpos/expl/expl_progs/odd.xsm
-rm even.xsm
-load --exec $HOME/myexpos/expl/expl_progs/even.xsm
-rm pid.xsm
-load --exec $HOME/myexpos/expl/expl_progs/pid.xsm
-rm fork3.xsm
-load --exec $HOME/myexpos/expl/expl_progs/fork3.xsm
-
+rm create.xsm
+load --exec $HOME/myexpos/expl/expl_progs/assg/assg1/create.xsm
 exit

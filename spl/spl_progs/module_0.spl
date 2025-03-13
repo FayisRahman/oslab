@@ -33,7 +33,7 @@ if(functionNum == 4) then
     endwhile ;
 
     //checking if file is deleted or not
-    if( [INODE_TABLE + inodeNumber * 16 + 1] == -1 ) then
+    if( [INODE_TABLE + inodeNum * 16 + 1] == -1 ) then
         R0 = -1;
     else
         [FILE_STATUS_TABLE + i * 4] = currentPID;
@@ -126,6 +126,7 @@ endif;
 
 // Release Terminal
 if (functionNum == 9) then
+    alias currentPID R2;
     if (currentPID != [TERMINAL_STATUS_TABLE + 1]) then
         alias returnValue R0;
         returnValue = -1;

@@ -9,6 +9,9 @@ loadi(60,4);
 //disk map table
 loadi(61,2);
 
+//root file
+loadi(62,5);
+
 //timer
 loadi(4, 17);
 loadi(5, 18);
@@ -16,6 +19,10 @@ loadi(5, 18);
 //console_interrupt
 loadi(8,21);
 loadi(9,22);
+
+//int4
+loadi(10,23);
+loadi(11,24);
 
 //int6
 loadi(14,27);
@@ -161,6 +168,8 @@ PTLR = 10;
 
 //init_process_gets_Scheduled_first
 
+[PROCESS_TABLE + 16 + 3] = 1;
+
 [PROCESS_TABLE + 16 + 4] = CREATED;
 
 //user_area_page
@@ -196,7 +205,7 @@ endwhile;
 
 i=0;
 while(i<10) do
-    if(i > 3 && i < 8) then
+    if(i > 3 && i < 6) then
         [DISK_MAP_TABLE + 10 + i] = [PTBR + 2*i];
     else
         [DISK_MAP_TABLE + 10 + i] = -1;
@@ -213,4 +222,22 @@ while(i<MAX_SEM_COUNT) do
     i = i + 1;
 endwhile;
 
+//initializing file status table
+
+i=0;
+while(i < MAX_FILE_NUM) do
+    [FILE_STATUS_TABLE + 4 * i] = -1;
+    [FILE_STATUS_TABLE + 4 * i + 1] = -1;
+    i = i + 1;
+endwhile;
+
+//initialising buffer table
+
+i=0;
+while(i < MAX_BUFFER) do
+    [BUFFER_TABLE + 4 * i] = -1;
+    [BUFFER_TABLE + 4 * i + 1] = 0;
+    [BUFFER_TABLE + 4 * i + 2] = -1;
+    i = i + 1;
+endwhile;
 return;
