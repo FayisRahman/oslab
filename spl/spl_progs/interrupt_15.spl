@@ -1,2 +1,36 @@
 //shutdown
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE] * 16 + 9] = 21;
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE] * 16 + 13] = SP;
+alias userSP R1;
+userSP = SP;
+
+alias returnAddr R2;
+returnAddr = ([PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512));
+
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE] * 16 + 11] * 512 - 1;
+
+if([SYSTEM_STATUS_TABLE + 1] != 1 || [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 3] != 1) then
+    [returnAddr] = -1;
+    SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE] * 16 + 13];
+    ireturn;
+endif;
+
+//now writing back some disk blocks
+
+multipush(R1, R2);
+//disk free list
+R1 = 1 // disk store
+R2 = [SYSTEM_STATUS_TABLE + 1];
+R3 = 61;
+R4 = 2;
+call DEVICE_MANAGER;
+
+//inode table
+R1 = 1 // disk store
+R2 = [SYSTEM_STATUS_TABLE + 1];
+R3 = 61;
+R4 = 2;
+call DEVICE_MANAGER;
+multipop(R1, R2);
 halt;

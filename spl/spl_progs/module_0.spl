@@ -1,8 +1,10 @@
+//resource manager
 alias functionNum R1;
-alias currentPID R2;
+
 
 // Acquire Disk
 if (functionNum == 3) then
+    alias currentPID R2;
     while ([DISK_STATUS_TABLE] == 1) do
         [PROCESS_TABLE + currentPID * 16 + 4] = WAIT_DISK;
         multipush(R1, R2);
@@ -14,7 +16,59 @@ if (functionNum == 3) then
     return;
 endif;
 
-if (functionNum == 6) then // acquire semaphore
+//accquire inode
+if(functionNum == 4) then
+
+    alias inodeNum R2;
+    alias currentPID R3;
+
+    alias i R4;
+    i = 0;
+    while( [FILE_STATUS_TABLE + i * 4] != -1 ) do
+        [PROCESS_TABLE + currentPID * 16 + 4] = WAIT_FILE;
+        [PROCESS_TABLE + currentPID * 16 + 5] = inodeNum;
+        multipush(R1, R2, R3);
+        call SCHEDULER;
+        multipop(R1, R2, R3);
+    endwhile ;
+
+    //checking if file is deleted or not
+    if( [INODE_TABLE + inodeNumber * 16 + 1] == -1 ) then
+        R0 = -1;
+    else
+        [FILE_STATUS_TABLE + i * 4] = currentPID;
+        R0 = 0;
+    endif;
+
+    return;
+
+endif;
+
+//release inode
+if(functionNum == 5) then
+
+    alias inodeNum R2;
+    alias currentPID R3;
+
+    if( [FILE_STATUS_TABLE + inodeNum * 4] != currentPID ) then
+        R0 = -1;
+        return;
+    else
+       [FILE_STATUS_TABLE + inodeNum * 4] = -1;
+    endif ;
+
+    alias i R4;
+    i = 0;
+    while( [PROCESS_TABLE + currentPID * 16 + 4] == WAIT_FILE && [PROCESS_TABLE + currentPID * 16 + 5] == inodeNum) do
+        [PROCESS_TABLE + currentPID * 16 + 4] = READY;
+    endwhile ;
+
+    return;
+    
+endif;
+
+// acquire semaphore
+if (functionNum == 6) then 
     alias i R3;
     i = 0;
     while(i < MAX_SEM_COUNT && [SEMAPHORE_TABLE + 4 * i + 1] != 0) do
@@ -55,6 +109,7 @@ endif;
 
 // Acquire Terminal
 if (functionNum == 8) then
+    alias currentPID R2;
     while ([TERMINAL_STATUS_TABLE] != 0) do
         [PROCESS_TABLE + currentPID * 16 + 4] = WAIT_TERMINAL;
         multipush(R1, R2);
@@ -90,3 +145,4 @@ if (functionNum == 9) then
         return;
     endif;
 endif;
+
