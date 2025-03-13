@@ -19,18 +19,35 @@ endif;
 //now writing back some disk blocks
 
 multipush(R1, R2);
+
 //disk free list
-R1 = 1 // disk store
+R1 = 1;     // disk store
 R2 = [SYSTEM_STATUS_TABLE + 1];
 R3 = 61;
 R4 = 2;
 call DEVICE_MANAGER;
 
-//inode table
-R1 = 1 // disk store
+//inode table + user table
+R1 = 1;     // disk store
 R2 = [SYSTEM_STATUS_TABLE + 1];
-R3 = 61;
-R4 = 2;
+R3 = 59;    //memory page
+R4 = 3;     //disk block
 call DEVICE_MANAGER;
+
+//inode table + user table
+R1 = 1;     // disk store
+R2 = [SYSTEM_STATUS_TABLE + 1];
+R3 = 60;    //memory page
+R4 = 4;     //disk block
+call DEVICE_MANAGER;
+
+//root file
+R1 = 1;     // disk store
+R2 = [SYSTEM_STATUS_TABLE + 1];
+R3 = 62;    //memory page
+R4 = 5;     //disk block
+call DEVICE_MANAGER;
+
 multipop(R1, R2);
+
 halt;
