@@ -99,6 +99,9 @@ else
         if([entry] == SEMAPHORE) then
             [SEMAPHORE_TABLE + 4 * [entry + 1] + 1] = [SEMAPHORE_TABLE + 4 * [entry + 1] + 1] + 1;
         endif;
+        if([entry] == FILE) then
+            [OPEN_FILE_TABLE + 4 * [entry + 1] + 1] = [OPEN_FILE_TABLE + 4 * [entry + 1] + 1] + 1;
+        endif;
         i = i + 2;
 
     endwhile;

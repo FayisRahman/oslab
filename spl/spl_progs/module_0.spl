@@ -1,6 +1,47 @@
 //resource manager
 alias functionNum R1;
 
+//accquire buffer
+if(functionNum == 1) then
+    alias bufferNum R2;
+    alias pid R3;
+
+
+    while([BUFFER_TABLE + 4 * bufferNum + 2] != -1) do
+        [PROCESS_TABLE + pid * 16 + 4] = WAIT_BUFFER;
+        [PROCESS_TABLE + pid * 16 + 5] = bufferNum;
+        multipush(R1, R2, R3);
+        call SCHEDULER;
+        multipop(R1, R2, R3);
+    endwhile;
+
+    [BUFFER_TABLE + 4 * bufferNum + 2] = pid;
+    return;
+endif;
+
+//release buffer
+if(functionNum == 2) then
+    alias bufferNum R2;
+    alias pid R3;
+
+    if(pid != [BUFFER_TABLE + 4 * bufferNum + 2]) then
+        R0 = -1;
+    else
+
+        [BUFFER_TABLE + 4 * bufferNum + 2] = -1;
+        alias i R4;
+        i = 0;
+        while (i < MAX_PROC_NUM) do
+            if ([PROCESS_TABLE + i * 16 + 4] == WAIT_BUFFER && [PROCESS_TABLE + i * 16 + 5] == bufferNum) then
+                [PROCESS_TABLE + i * 16 + 4] = READY;
+            endif;
+            i = i + 1;
+        endwhile;
+        R0 = 0; 
+    endif;
+     
+    return;
+endif;
 
 // Acquire Disk
 if (functionNum == 3) then
@@ -22,9 +63,7 @@ if(functionNum == 4) then
     alias inodeNum R2;
     alias currentPID R3;
 
-    alias i R4;
-    i = 0;
-    while( [FILE_STATUS_TABLE + i * 4] != -1 ) do
+    while( [FILE_STATUS_TABLE + inodeNum * 4] != -1 ) do
         [PROCESS_TABLE + currentPID * 16 + 4] = WAIT_FILE;
         [PROCESS_TABLE + currentPID * 16 + 5] = inodeNum;
         multipush(R1, R2, R3);
@@ -36,7 +75,7 @@ if(functionNum == 4) then
     if( [INODE_TABLE + inodeNum * 16 + 1] == -1 ) then
         R0 = -1;
     else
-        [FILE_STATUS_TABLE + i * 4] = currentPID;
+        [FILE_STATUS_TABLE + inodeNum * 4] = currentPID;
         R0 = 0;
     endif;
 

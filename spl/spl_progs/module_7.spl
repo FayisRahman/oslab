@@ -16,6 +16,10 @@ loadi(62,5);
 loadi(4, 17);
 loadi(5, 18);
 
+//disk interrupt handler
+loadi(6,19);
+loadi(7,20);
+
 //console_interrupt
 loadi(8,21);
 loadi(9,22);
@@ -23,6 +27,11 @@ loadi(9,22);
 //int4
 loadi(10,23);
 loadi(11,24);
+
+//int5
+loadi(12,25);
+loadi(13,26);
+
 
 //int6
 loadi(14,27);
@@ -85,12 +94,15 @@ loadi(44,57);
 loadi(45,58);
 
 //module 4
+loadi(46,59);
+loadi(47,60);
+
+
+//module 4
 loadi(48,61);
 loadi(49,62);
 
-//disk interrupt handler
-loadi(6,19);
-loadi(7,20);
+
 
 //initialising disk status table
 [DISK_STATUS_TABLE + 0] = 0;
@@ -240,4 +252,13 @@ while(i < MAX_BUFFER) do
     [BUFFER_TABLE + 4 * i + 2] = -1;
     i = i + 1;
 endwhile;
+
+//initiliasing open file table
+i=0;
+while(i < MAX_BUFFER) do
+   [OPEN_FILE_TABLE + i * 4 + 0] = -1;
+    [OPEN_FILE_TABLE + i * 4 + 1] = 0;
+    i = i + 1;
+endwhile;
+
 return;
