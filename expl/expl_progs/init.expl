@@ -17,7 +17,23 @@ int main() {
                     continue;
                 endif;
                 if (pid == 0) then
-                    temp = exposcall("Exec", input);
+                    if(input == "ls") then
+                        temp = exposcall("Exec", "ls.xsm");
+                    else
+                        if(input == "rm") then
+                            temp = exposcall("Exec", "rm.xsm");
+                        else
+                            if(input == "cp") then
+                                temp = exposcall("Exec", "cp.xsm");
+                            else
+                                if(input == "cat") then
+                                    temp = exposcall("Exec", "cat.xsm");
+                                else
+                                    temp = exposcall("Exec", input);
+                                endif;
+                            endif;
+                        endif;
+                    endif;
                     if (temp != 0) then
                         temp = exposcall("Write", -2, "BAD COMMAND");
                         break;

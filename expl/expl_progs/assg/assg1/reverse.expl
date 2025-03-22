@@ -1,0 +1,32 @@
+int main(){
+decl
+  int temp, fileDesc,permission,val,offset;
+  str fileName, word;
+enddecl
+begin
+    temp = exposcall("Write",-2,"filename: ");
+    temp = exposcall("Read",-1,fileName);
+
+    temp = exposcall("Write",-2,"permission:");
+    temp = exposcall("Read",-1,permission);
+
+    temp = exposcall("Create",fileName,permission);
+
+    fileDesc = exposcall("Open",fileName);
+    val = 1;
+    while(val <= 1100 ) do
+        temp = exposcall("Write",fileDesc,val);
+        temp = exposcall("Write",-2,val);
+        val = val + 1;
+    endwhile;
+    offset = -1;
+    while(val > 0 ) do
+        temp = exposcall("Seek",fileDesc,offset);
+        temp = exposcall("Read",fileDesc,word);
+        temp = exposcall("Write",-2,word);
+        if(offset == -1)then offset = offset - 1;endif;
+        val = val - 1;
+    endwhile;
+return 0;
+end
+}

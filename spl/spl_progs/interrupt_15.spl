@@ -18,6 +18,30 @@ if([SYSTEM_STATUS_TABLE + 1] != 1 || [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] 
     ireturn;
 endif;
 
+//calling kill all function from process manager
+
+R1 = 5; //kill all
+R2 = [SYSTEM_STATUS_TABLE + 1];
+call PROCESS_MANAGER;
+
+//now we write back the buffer contents
+
+alias i R5;
+i = 0;
+while(i<MAX_BUFFER) do
+    if([BUFFER_TABLE + 4 * i + 1] == 1) then
+        //dirty so we write back to disk
+        multipush(R5);
+        R1 = 1; //disk store
+        R2 = [SYSTEM_STATUS_TABLE + 1];
+        R3 = BUFFER_BASE + i;
+        R4 = [BUFFER_TABLE + 4 * i + 0];
+        call DEVICE_MANAGER;
+        multipop(R5);
+    endif;
+    i = i + 1;
+endwhile;
+
 //now writing back some disk blocks
 
 //disk free list

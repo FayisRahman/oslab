@@ -1,136 +1,106 @@
-//read
+// Set mode flag to system call number
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 7;
 
 alias userSP R0;
 userSP = SP;
 
-[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = userSP;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = SP;
 
 SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 - 1;
 
-alias fd R3;
+alias returnAddress R1;
+returnAddress = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
 
-fd =  [([PTBR + 2 * ((userSP - 4 ) / 512)]* 512) + ((userSP - 4) % 512)];
+alias fileDescriptor R2;
+fileDescriptor = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + (userSP - 4) % 512];
 
-
-alias physicalAddrRetVal R2;
-physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1)/512)] * 512)  + ((userSP-1) % 512);
-
-if(fd != -1) then
-    
-    //here we are reading from file
-    alias perProcessTable R1;
-    perProcessTable = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 + RESOURCE_TABLE_OFFSET;
-    alias openFileTableEntry R4;
-    alias inodeIndex R5;
-
-    if(fd < 0 || fd > 7) then
-
-        [physicalAddrRetVal] = -1;
-
+if (fileDescriptor != -1) then // File Read
+    if (fileDescriptor < 0 || fileDescriptor > 7) then
+        [returnAddress] = -1;
     else
+        alias resourceTableEntry R3;
+        resourceTableEntry = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 + RESOURCE_TABLE_OFFSET + fileDescriptor * 2;
 
-        if([perProcessTable + 2 * fd] != FILE) then
-
-            [physicalAddrRetVal] = -1;
-
+        if ([resourceTableEntry + 0] != FILE) then
+            [returnAddress] = -1;
         else
-            
-            openFileTableEntry = [perProcessTable + 2 * fd + 1];
+            breakpoint;
+            alias inodeIndex R4;
+            alias openFileTableEntry R5;
+            openFileTableEntry = [resourceTableEntry + 1];
+            inodeIndex = [OPEN_FILE_TABLE + openFileTableEntry * 4 + 0];
 
-            inodeIndex = [OPEN_FILE_TABLE + 4 * openFileTableEntry];
-
-            multipush(R0,R1,R2,R3,R4,R5);
-            R1 = ACQUIRE_INODE;
+            multipush(R0, R1, R2, R3, R4, R5);
+            R1 = 4;
             R2 = inodeIndex;
             R3 = [SYSTEM_STATUS_TABLE + 1];
-            call RESOURCE_MANAGER;
+            call RESOURCE_MANAGER; // acquire inode
             R9 = R0;
-            multipop(R0,R1,R2,R3,R4,R5);
-            if(R9 == -1) then
-                [physicalAddrRetVal] = -1;
+            multipop(R0, R1, R2, R3, R4, R5);
+
+            if (R9 == -1) then
+                [returnAddress] = -1;
             else
+                alias lSeek R6;
+                lSeek = OPEN_FILE_TABLE + openFileTableEntry * 4 + 2;
 
-                alias lseekPos R6;
-                lseekPos = OPEN_FILE_TABLE + 4 * openFileTableEntry + 2;
+                alias wordAddress R7;
+                wordAddress = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + (userSP - 3) % 512];
+                wordAddress = [PTBR + 2 * (wordAddress / 512)] * 512 + wordAddress % 512;
 
-                alias wordAddr R7;
-                wordAddr = [[PTBR + 2 * ((userSP - 3)/512)] * 512 + ((userSP - 3) % 512)];
-                wordAddr = [PTBR + 2 * (wordAddr / 512)] * 512 + wordAddr % 512;
-
-
-                if(inodeIndex == INODE_ROOT) then
-                    if([lseekPos] == 480) then //root file size
-                        //need to release the inode
-                        [physicalAddrRetVal] = -2;
+                if (inodeIndex == INODE_ROOT) then
+                    if ([lSeek] == 480) then
+                        [returnAddress] = -2;
                     else
-                        [wordAddr] = [ROOT_FILE + [lseekPos]];
-                        [lseekPos] = [lseekPos] + 1;
-                        [physicalAddrRetVal] = 0;
+                        [wordAddress] = [ROOT_FILE + [lSeek]];
+                        [lSeek] = [lSeek] + 1;
+                        [returnAddress] = 0;
                     endif;
                 else
-                    if([lseekPos] >= [INODE_TABLE + 16 * inodeIndex + 2]) then // End of file reached 
-                        //need to release the inode
-                        [physicalAddrRetVal] = -2;
+                    if ([lSeek] == [INODE_TABLE + inodeIndex * 16 + 2]) then
+                        [returnAddress] = -2;
                     else
+                        alias diskBlock R11;
+                        alias offset R12;
+                        diskBlock = [INODE_TABLE + inodeIndex * 16 + 8 + ([lSeek] / 512)];
+                        offset = [lSeek] % 512;
 
-                        //Find the disk block number and the position in the block from which input is read.
-                        alias diskBlockNum R8;
-                        alias blockOffset R9;
-                        diskBlockNum = [INODE_TABLE + inodeIndex * 16 + 8 + ([lseekPos] / 512)];
-                        blockOffset = [lseekPos] % 512;
-
-                        //Read the data from the File Buffer by calling the buffered_read() function in the File Manager module.
-
-                        multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9);
-                        R1 = BUFFERED_READ; //function number 2
-                        R2 = diskBlockNum;
-                        R3 = blockOffset;
-                        R4 = wordAddr; //address to which it should be read
-                        call FILE_MANAGER;
-                        multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9);
-
-                        breakpoint;
-
-                        [lseekPos] = [lseekPos] + 1;
-
-                        [physicalAddrRetVal] = 0;
-
+                        multipush(R0, R1, R2, R3, R4, R5, R6, R7, R11, R12);
+                        R1 = 2;
+                        R2 = diskBlock;
+                        R3 = offset;
+                        R4 = wordAddress;
+                        call FILE_MANAGER; // buffer read
+                        multipop(R0, R1, R2, R3, R4, R5, R6, R7, R11, R12);
+                        [lSeek] = [lSeek] + 1;
+                        [returnAddress] = 0;
                     endif;
-
                 endif;
-
-                // Release the Lock on the File by calling the release_inode() function in the Resource Manager module.
-                multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9);
-                R1 = RELEASE_INODE;
+                
+                multipush(R0, R1, R2, R3, R4, R5, R6, R7, R11, R12);
+                R1 = 5;
                 R2 = inodeIndex;
                 R3 = [SYSTEM_STATUS_TABLE + 1];
-                call RESOURCE_MANAGER;
-                multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9);
+                call RESOURCE_MANAGER; // relase inode
+                multipop(R0, R1, R2, R3, R4, R5, R6, R7, R11, R12);
             endif;
         endif;
     endif;
-else 
+else // Terminal Read
+    alias wordAddress R3;
+    wordAddress = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + (userSP - 3) % 512];
 
-    alias wordAddr R6;
-    wordAddr = [[PTBR + 2 * ((userSP - 3)/512)] * 512 + ((userSP - 3) % 512)];
-    
-    multipush(R0,R1,R2,R3,R4,R5,R6);
-    
-    alias arg1 R1;
-    alias arg2 R2;
-    alias arg3 R3;
-    arg1 = 4;
-    arg2 = [SYSTEM_STATUS_TABLE + 1];
-    arg3 = wordAddr;
+    multipush(R0, R1, R2, R3);
+
+    R1 = 4;
+    R2 = [SYSTEM_STATUS_TABLE + 1];
+    R3 = wordAddress;
 
     call MOD_4;
 
-    
-    multipop(R0,R1,R2,R3,R4,R5,R6);
-    
-    [physicalAddrRetVal] = 0;
+    multipop(R0, R1, R2, R3);
 
+    [returnAddress] = 0;
 endif;
 
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
@@ -138,5 +108,3 @@ endif;
 SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
 
 ireturn;
-
-

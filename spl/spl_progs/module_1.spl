@@ -2,6 +2,31 @@
 alias functionNumber R1;
 alias currentPID R2;
 
+//get pcb entry
+if(functionNumber == 1) then
+
+    R0 = -1;
+    alias i R1;
+    i = 1;
+    while(i<16) do
+        if([PROCESS_TABLE + i*16 + 4] == TERMINATED) then
+            R0 = i;
+            break;
+        endif;
+        i = i + 1;
+    endwhile;
+
+    if(R0 != -1) then
+        [PROCESS_TABLE + i * 16 + 1] = i;
+        [PROCESS_TABLE + i * 16 + 4] = ALLOCATED;
+        [PROCESS_TABLE + i * 16 + 14] = PAGE_TABLE_BASE + i * 20;
+        [PROCESS_TABLE + i * 16 + 15] = 10;
+    endif;
+
+    return;
+
+endif;
+
 // free user areaPage
 if (functionNumber == 2) then
     alias userAreaPageNumber R3;
@@ -70,6 +95,7 @@ if (functionNumber == 3) then
     multipop(R1, R2);
 
     [PROCESS_TABLE + 16 * currentPID + 4] = TERMINATED;
+    print "exit"
     return;
 endif;
 
@@ -123,27 +149,52 @@ if (functionNumber == 4) then
     return;
 endif;
 
-//get pcb entry
-if(functionNumber == 1) then
+//kill all
+if(functionNumber == 5) then
+    alias i R4;
 
-    R0 = -1;
-    alias i R1;
-    i = 1;
-    while(i<16) do
-        if([PROCESS_TABLE + i*16 + 4] == TERMINATED) then
-            R0 = i;
-            break;
+    //for every valid entry in the inode table we acquire the inode
+    i = 0;
+    while(i < MAX_FILE_NUM) do
+        if([INODE_TABLE + i * 16 + 1] != -1) then
+            multipush(R1, R2, R4);
+            R1 = ACQUIRE_INODE;
+            R3 = currentPID;
+            R2 = i;
+            call RESOURCE_MANAGER;
+            multipop(R1, R2, R4);
+        endif;
+        i = i + 1;
+    endwhile;
+    
+    //only useful when pager module is implemented which is stage 27
+    i = 2;
+    while(i < MAX_PROC_NUM) do
+        if( i != currentPID && [PROCESS_TABLE + i * 16 + 4] != TERMINATED) then
+            //calling exit process
+            multipush(R1, R2,R4);
+            R1 = 3; //exit process
+            R2 = i;
+            call PROCESS_MANAGER;
+            multipop(R1, R2,R4);
         endif;
         i = i + 1;
     endwhile;
 
-    if(R0 != -1) then
-        [PROCESS_TABLE + i * 16 + 1] = i;
-        [PROCESS_TABLE + i * 16 + 4] = ALLOCATED;
-        [PROCESS_TABLE + i * 16 + 14] = PAGE_TABLE_BASE + i * 20;
-        [PROCESS_TABLE + i * 16 + 15] = 10;
-    endif;
+    //for every valid entry in thei node table we release teh acquired inode
+    i = 0;
+    while(i < MAX_FILE_NUM) do
+        if([INODE_TABLE + i * 16 + 1] != -1) then
+            multipush(R1, R2, R4);
+            R1 = RELEASE_INODE;
+            R3 = currentPID;
+            R2 = i;
+            call RESOURCE_MANAGER;
+            multipop(R1, R2, R4);
+        endif;
+        i = i + 1;
+    endwhile;
 
     return;
-
 endif;
+

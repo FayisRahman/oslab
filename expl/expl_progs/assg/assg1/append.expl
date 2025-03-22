@@ -1,0 +1,44 @@
+int main(){
+decl
+  int temp,temp1, fileDesc,permission,val,offset,startNum,endNum,value,a;
+  str fileName, word;
+enddecl
+begin
+    temp = exposcall("Write",-2,"filename: ");
+    temp = exposcall("Read",-1,fileName);
+
+    fileDesc = exposcall("Open",fileName);
+    if(fileDesc < 0)then
+        temp = exposcall("Write",-2,"File not found");
+    else
+        temp = exposcall("Write",-2,"Start Number:");
+        temp = exposcall("Read",-1,startNum);
+        temp = exposcall("Write",-2,"End Number:");
+        temp = exposcall("Read",-1,endNum);
+        temp = exposcall("Seek", fileDesc, 1100);
+        val = startNum;
+        while(val <= endNum ) do
+            temp = exposcall("Write",fileDesc,val);
+            temp1 = exposcall("Write",-2,val);
+            val = val + 1;
+        endwhile;
+        offset = -1;
+        while(a != -2 ) do
+            a = exposcall("Seek",fileDesc,-1);
+            temp = exposcall("Read",fileDesc,word);
+            if(a == -2) then
+                break;
+            endif;
+            if(temp == -2) then
+                temp = exposcall("Write", -2, "EOF");
+                break;
+            endif;
+            temp1 = exposcall("Write",-2,word);
+            if(offset == -1)then offset = offset - 1;endif;
+            val = val - 1;
+            a = exposcall("Seek",fileDesc,-1);
+        endwhile;
+    endif;
+return 0;
+end
+}
