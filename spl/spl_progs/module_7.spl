@@ -57,17 +57,29 @@ loadi(23,36);
 loadi(24,37);
 loadi(25,38);
 
+//int_12
+loadi(26,39);
+loadi(27,40);
+
 // int 13
-loadi(28, 41);
-loadi(29, 42);
+loadi(28,41);
+loadi(29,42);
 
 // int 14
-loadi(30, 43);
-loadi(31, 44);
+loadi(30,43);
+loadi(31,44);
 
 //int_15
 loadi(32,45);
 loadi(33,46);
+
+//int_16
+loadi(34,47);
+loadi(35,48);
+
+//int_17
+loadi(36,49);
+loadi(37,50);
 
 //scheduler
 loadi(50,63);
@@ -79,7 +91,10 @@ loadi(64,14);
 
 //init
 loadi(65,7);
-loadi(66,8);
+
+//shell
+loadi(67,9);
+loadi(68,10);
 
 //module 0
 loadi(40,53);
@@ -113,7 +128,6 @@ loadi(49,62);
 [TERMINAL_STATUS_TABLE + 0] = 0;
 
 //setting process table state to terminated
-multipush(R0);
 alias i R0;
 i = 0;
 while(i<16) do
@@ -123,11 +137,11 @@ endwhile;
 
 //initialising memory free list
 
-//as effective free page start from 83 (we used some for idle and init process) and upto 127
+//as effective free page start from 78 (we used some for idle and init process) and upto 127
 i = 0;
 
 while(i < NUM_MEM_PAGES) do
-    if(i < 83) then
+    if(i < 81) then
         [MEMORY_FREE_LIST + i] = 1;
     else
         [MEMORY_FREE_LIST + i] = 0;
@@ -135,77 +149,58 @@ while(i < NUM_MEM_PAGES) do
     i = i + 1;
 endwhile;
 
+alias processTable R1;
+
 //initialising system status table
 
-[SYSTEM_STATUS_TABLE + 2] = 45;
+[SYSTEM_STATUS_TABLE + 2] = 47;
 [SYSTEM_STATUS_TABLE + 3] = 0;
 
-multipop(R0);
 //init_page_Table
-
 PTBR = PAGE_TABLE_BASE+20;
 PTLR = 10;
-
 //Library
 [PTBR+0] = 63;
 [PTBR+1] = "0100";
 [PTBR+2] = 64;
 [PTBR+3] = "0100";
-
 //Heap
-[PTBR+4] = 78;
-[PTBR+5] = "0110";
-[PTBR+6] = 79;
-[PTBR+7] = "0110";
-
+[PTBR+4] = -1;
+[PTBR+5] = "0000";
+[PTBR+6] = -1;
+[PTBR+7] = "0000";
 //Code
 [PTBR+8] = 65;
 [PTBR+9] = "0100";
-[PTBR+10] = 66;
-[PTBR+11] = "0100";
+[PTBR+10] = -1;
+[PTBR+11] = "0000";
 [PTBR+12] = -1;
 [PTBR+13] = "0000";
 [PTBR+14] = -1;
 [PTBR+15] = "0000";
-
 //Stack
-[PTBR+16] = 76;
+[PTBR+16] = 66;
 [PTBR+17] = "0110";
-[PTBR+18] = 77;
-[PTBR+19] = "0110";
+[PTBR+18] = -1;
+[PTBR+19] = "0000";
 
+processTable = PROCESS_TABLE + 16;
 
-//pid_for_init
-[PROCESS_TABLE + 16 + 1] = 1;
+[processTable + 1] = 1;       //pid_for_init
+[processTable + 3] = 1;       //init_process_gets_Scheduled_first
+[processTable + 4] = CREATED;
+[processTable + 11] = 77;     //user_area_page
+[processTable + 12] = 0;     //KPTR_for_init
+[processTable + 13] = 8*512; //UPTR_for_init
+[processTable + 14] = PTBR;   //PTBR_for_init
+[processTable + 15] = PTLR;   //PTLR_for_init
 
-//init_process_gets_Scheduled_first
-
-[PROCESS_TABLE + 16 + 3] = 1;
-
-[PROCESS_TABLE + 16 + 4] = CREATED;
-
-//user_area_page
-[PROCESS_TABLE + 16 + 11] = 80;
-
-//KPTR_for_init
-[PROCESS_TABLE + 16  + 12] = 0;
-
-//UPTR_for_init
-[PROCESS_TABLE + 16  + 13] = 8*512;
-
-//PTBR_for_init
-[PROCESS_TABLE + 16 + 14] = PTBR;
-
-//PTLR_for_init
-[PROCESS_TABLE + 16 + 15] = PTLR;
-
-
-[ 76 * 512 ] = [65 * 512 + 1];
+[66 * 512] = [65 * 512 + 1];
 
 
 //initialising per process table of init process
-alias perProcessTable R1;
-perProcessTable = ([PROCESS_TABLE + 16 + 11] + 1) * 512 - 16;
+alias perProcessTable R2;
+perProcessTable = ([processTable + 11] + 1) * 512 - 16;
 
 i=0;
 while(i<16) do
@@ -213,20 +208,67 @@ while(i<16) do
     i = i + 1;
 endwhile;
 
-//initializing disk map table for init process
+
+//shell_page_Table
+
+PTBR = PAGE_TABLE_BASE+40;
+PTLR = 10;
+
+//Library
+[PTBR+0] = 63;
+[PTBR+1] = "0100";
+[PTBR+2] = 64;
+[PTBR+3] = "0100";
+//Heap
+[PTBR+4] = -1;
+[PTBR+5] = "0000";
+[PTBR+6] = -1;
+[PTBR+7] = "0000";
+//Code
+[PTBR+8] = 67;
+[PTBR+9] = "0100";
+[PTBR+10] = 68;
+[PTBR+11] = "0100";
+[PTBR+12] = -1;
+[PTBR+13] = "0000";
+[PTBR+14] = -1;
+[PTBR+15] = "0000";
+//Stack
+[PTBR+16] = 78;
+[PTBR+17] = "0110";
+[PTBR+18] = 79;
+[PTBR+19] = "0110";
+
+processTable = PROCESS_TABLE + 32;
+
+[processTable + 1] = 2;           //pid_for_shell
+[processTable + 2] = 1;           //ppid
+[processTable + 3] = 2;           //pid
+[processTable + 4] = TERMINATED;
+[processTable + 11] = 80;         //user_area_page
+[processTable + 12] = 0;          //KPTR_for_init
+[processTable + 13] = 8*512;     //UPTR_for_init
+[processTable + 14] = PTBR;       //PTBR_for_init
+[processTable + 15] = PTLR;       //PTLR_for_init
+
+
+[78 * 512 ] = [67 * 512 + 1];
+
+//initialising disk map table for shell
 
 i=0;
+alias diskMapTable R1;
+diskMapTable = DISK_MAP_TABLE + 10 * 2;
 while(i<10) do
-    if(i > 3 && i < 6) then
-        [DISK_MAP_TABLE + 10 + i] = [PTBR + 2*i];
+    if(i>=4 && i < 6) then
+        [diskMapTable + i] = [PTBR + i * 2];
     else
-        [DISK_MAP_TABLE + 10 + i] = -1;
+        [diskMapTable + i] = -1;
     endif;
     i = i + 1;
 endwhile;
 
 //initializing semaphore table entry
-
 i=0;
 while(i<MAX_SEM_COUNT) do
     [SEMAPHORE_TABLE + 4 * i] = -1;
@@ -235,7 +277,6 @@ while(i<MAX_SEM_COUNT) do
 endwhile;
 
 //initializing file status table
-
 i=0;
 while(i < MAX_FILE_NUM) do
     [FILE_STATUS_TABLE + 4 * i] = -1;
@@ -244,7 +285,6 @@ while(i < MAX_FILE_NUM) do
 endwhile;
 
 //initialising buffer table
-
 i=0;
 while(i < MAX_BUFFER) do
     [BUFFER_TABLE + 4 * i] = -1;

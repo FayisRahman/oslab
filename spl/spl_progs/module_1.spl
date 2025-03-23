@@ -95,7 +95,7 @@ if (functionNumber == 3) then
     multipop(R1, R2);
 
     [PROCESS_TABLE + 16 * currentPID + 4] = TERMINATED;
-    print "exit"
+    print "exit";
     return;
 endif;
 
