@@ -167,6 +167,6 @@ else
     SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
 endif;
 
-print "forking done";
+// print "forking done";
 ireturn;
 

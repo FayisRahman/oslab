@@ -7,7 +7,10 @@ loadi(69,11);
 
 //setting sp to the kernel stck of idle process
 
-SP = 82 * 512 - 1;
+// scheduler(module 5)
+loadi(50, 63);
+loadi(51, 64);
+SP = 76 * 512 - 1;
 
 call BOOT_MODULE;
 
@@ -100,7 +103,7 @@ SP = 8*512;
 [PROCESS_TABLE + 15 * 16 + 11] = 82;  //user_AreA_page_for_idle_is82
 [PROCESS_TABLE + 15 * 16 + 12] = 0; //KPTR_for_idle
 [PROCESS_TABLE + 15 * 16 + 13] = SP; //UPTR_for_idle
-[PROCESS_TABLE + 15 * 16 + 14] = PAGE_TABLE_BASE; //PTBR_for_idle
+[PROCESS_TABLE + 15 * 16 + 14] = PTBR; //PTBR_for_idle
 [PROCESS_TABLE + 15 * 16 + 15] = 10; //PTLR_for_idle
 
 [SYSTEM_STATUS_TABLE + 1] = 0;

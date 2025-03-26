@@ -95,7 +95,7 @@ if (functionNumber == 3) then
     multipop(R1, R2);
 
     [PROCESS_TABLE + 16 * currentPID + 4] = TERMINATED;
-    print "exit";
+    // print "exit";
     return;
 endif;
 
@@ -169,7 +169,7 @@ if(functionNumber == 5) then
     
     //only useful when pager module is implemented which is stage 27
     i = 2;
-    while(i < MAX_PROC_NUM) do
+    while(i < MAX_PROC_NUM-1) do
         if( i != currentPID && [PROCESS_TABLE + i * 16 + 4] != TERMINATED) then
             //calling exit process
             multipush(R1, R2,R4);

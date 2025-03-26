@@ -29,7 +29,7 @@ if(functionNum == 1) then
 
     R0 = memPage;
 
-    print "get free page";
+    // print "get free page";
 
     return;
 
@@ -52,7 +52,7 @@ if(functionNum == 2) then
         pid = pid + 1;
     endwhile;
 
-    print "release page";
+    // print "release page";
 
     return;
     
@@ -88,7 +88,7 @@ endif;
 
 //get code page
 if(functionNum == 5) then
-    print "get code page";
+    // print "get code page";
     alias blockNum R2;
     alias diskMapTable R3;
     alias i R4;
@@ -137,8 +137,8 @@ if(functionNum == 5) then
     R2 = [SYSTEM_STATUS_TABLE + 1]; //current PID //here why we put R4 before R2 was that we are using R2 for blockNum in this fucntion scope but the parameters of the next funtion which is disk load requires R2 to be currentPID and R4 as block number so first we put R4 = R2 then R2 = currentPID;
     R3 = memPageNum; //page number
 
-    print R4;
-    print R3;
+    // print R4;
+    // print R3;
      
     call MOD_4;
 
@@ -151,4 +151,23 @@ if(functionNum == 5) then
 
     return;
 
+endif;
+
+// GET_SWAP_BLOCK
+if (functionNum == 6) then 
+    alias i R2;
+    i = DISK_SWAP_AREA;
+    while (i < DISK_SIZE) do
+        if ([DISK_FREE_LIST + i] == 0) then 
+            break;
+        endif;
+        i = i+1;
+    endwhile;
+    if (i == DISK_SIZE) then
+        R0 = -1;
+    else
+        [DISK_FREE_LIST + i] = 1;
+        R0 = i;
+    endif;
+return;
 endif;

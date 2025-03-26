@@ -81,10 +81,6 @@ loadi(35,48);
 loadi(36,49);
 loadi(37,50);
 
-//scheduler
-loadi(50,63);
-loadi(51,64);
-
 //library
 loadi(63,13);
 loadi(64,14);
@@ -116,9 +112,13 @@ loadi(47,60);
 loadi(48,61);
 loadi(49,62);
 
+//scheduler(module 5)
+loadi(50,63);
+loadi(51,64);
+
 //module 6
 loadi(52,65);
-loadi(43,66);
+loadi(53,66);
 
 
 //initialising disk status table
@@ -302,7 +302,7 @@ endwhile;
 //initiliasing open file table
 i=0;
 while(i < MAX_BUFFER) do
-   [OPEN_FILE_TABLE + i * 4 + 0] = -1;
+    [OPEN_FILE_TABLE + i * 4 + 0] = -1;
     [OPEN_FILE_TABLE + i * 4 + 1] = 0;
     i = i + 1;
 endwhile;

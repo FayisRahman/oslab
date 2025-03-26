@@ -1,6 +1,5 @@
 //Scheduler
 
-
 alias currentPID R1;
 
 currentPID = [SYSTEM_STATUS_TABLE+1];
@@ -17,7 +16,15 @@ process_table_entry = PROCESS_TABLE + currentPID * 16;
 //-----------getting a new process
 
 alias newPID R3;
-newPID = currentPID + 1;
+
+// alias i R4;
+// i = 0;
+// print "start";
+// while(i<16) do
+//     print [PROCESS_TABLE + i*16 + 4];
+//     i = i + 1;
+// endwhile;
+// print "end";
 
 if([SYSTEM_STATUS_TABLE + 5] == 1) then
     if([PROCESS_TABLE + 15 * 16 + 4] == WAIT_DISK) then
@@ -26,17 +33,18 @@ if([SYSTEM_STATUS_TABLE + 5] == 1) then
         newPID = SWAPPER_DAEMON;
     endif;
 else
-    while(newPID < 16) do
-        if(([PROCESS_TABLE + newPID*16 + 4] == READY || [PROCESS_TABLE + newPID*16 + 4] == CREATED ) && [PROCESS_TABLE + newPID * 16 + 6] == 0) then
+    newPID = currentPID + 1;
+    while(newPID < MAX_PROC_NUM - 1) do
+        if(([PROCESS_TABLE + newPID*16 + 4] == READY || [PROCESS_TABLE + newPID*16 + 4] == CREATED ) && [PROCESS_TABLE + newPID * 16 + 6] != 1) then
             break;
         endif;
         newPID = newPID + 1;
     endwhile;
+    if(newPID >= MAX_PROC_NUM - 1) then
+        newPID = 0;
+    endif;
 endif;
 
-if(newPID >= 16) then
-    newPID = 0;
-endif;
 
 //-----------found a new Process ^
 

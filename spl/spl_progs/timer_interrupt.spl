@@ -6,7 +6,7 @@ SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
 backup;
 
 //-----------PAGER_MODULE----------------//
-if([SYSTEM_STATUS_TABLE + 5] == 1) then //paging has been initiated
+if([SYSTEM_STATUS_TABLE + 5] == 5) then //paging has been initiated
 
 	if([SYSTEM_STATUS_TABLE + 1] == SWAPPER_DAEMON) then
 		R1 = [SYSTEM_STATUS_TABLE + 5];
