@@ -1,0 +1,192 @@
+//PAGER_MODULE
+
+alias functionNum R1;
+alias currentPID R2;
+
+//swap out
+if(functionNum == 1) then
+
+    alias swapPID R3;
+    swapPID = -1; 
+    alias i R4;
+    i = 3;
+
+    alias maxTick R10;
+    maxTick = -1;
+    alias maxTickPid R11;
+    maxTickPid = -1;
+
+    alias processTable R12;
+    while(i<MAX_PROC_NUM - 1) do
+        processTable = PROCESS_TABLE + i * 16;
+        if([processTable + 6] == 0 ) then
+            if([processTable + 4] == WAIT_PROCESS) then //first checks for a process in WAIT_PROCESS
+                swapPID = i;
+                break;
+            endif;
+            if(swapPID == -1 && [processTable + 4] == WAIT_SEMAPHORE) then //here it checks for a process in WAIT_SEMAPHORE (my logic here is that once u get a process in wait process it will break other wise it will accept a WAIT_SEMAPHORE)
+                swapPID = i;
+            endif;
+        endif;
+        i = i + 1;
+    endwhile;
+    if(swapPID == -1) then
+        i = 3;
+        while(i<MAX_PROC_NUM - 1) do
+        processTable = PROCESS_TABLE + i * 16;
+            if([processTable + 6] == 0 ) then
+                if([processTable + 4] != RUNNING && [processTable + 4] != ALLOCATED && [processTable + 4] != TERMINATED) then
+                    if([processTable] > maxTick) then
+                        maxTick = [processTable];
+                        maxTickPid = i;
+                        break;
+                    endif;
+                endif;
+            endif;
+            i = i + 1;
+        endwhile;
+        swapPID = maxTickPid;
+    endif;
+    
+    if(swapPID == -1) then
+        [SYSTEM_STATUS_TABLE + 5] = 0;
+        R0 = -1;
+        return;
+    endif;
+
+    [PROCESS_TABLE + swapPID * 16] = 0; //resetting TICK
+
+    //----releasing the code pages
+    i=2;
+    alias ptbr R8;
+    ptbr = PAGE_TABLE_BASE + swapPID * 20;
+    alias pageNum R9;
+    while(i<10) do
+        pageNum = [ptbr + 2 * i];
+        //------stack or heap page
+        if(i < 4 || i > 7) then
+            //------stack pages are not shared and below will check if heap pages are shared or not(so using single condition we check for both stack and heap)
+            if(pageNum != -1 && [MEMORY_FREE_LIST + pageNum] == 1) then
+                //getting free swap block
+                multipush(R1,R2,R3,R4);
+                R1 = GET_SWAP_BLOCK;
+                call MEMORY_MANAGER;
+                multipop(R1,R2,R3,R4);
+                [DISK_MAP_TABLE + swapPID * 10 + i] = R0;
+
+                //---storing in the disk-----
+                multipush(R1,R2,R3,R4);
+                R1 = DISK_STORE;
+                R2 = SWAPPER_DAEMON;
+                R3 = pageNum;
+                R4 = R0;
+                call DEVICE_MANAGER;
+                multipop(R1,R2,R3,R4);
+            endif;
+        endif;
+
+        //-------releasing mem page
+        if(pageNum != -1) then
+            multipush(R1,R2,R3,R4);
+            R1 = RELEASE_PAGE;
+            R2 = [ptbr + 2 * i];
+            call MEMORY_MANAGER;
+            multipop(R1,R2,R3,R4);
+        endif;
+
+        [ptbr + 2 * i] = -1;
+        [ptbr + 2 * i + 1] = "0000";
+        i = i + 1;
+    endwhile;
+
+    [PROCESS_TABLE + swapPID * 16 + 6] = 1;
+
+    [SYSTEM_STATUS_TABLE + 4] = [SYSTEM_STATUS_TABLE + 4] + 1;
+    [SYSTEM_STATUS_TABLE + 5] = 0;
+
+    print "swap out";
+    print swapPID;
+
+    return;
+endif;
+
+//SWAP_IN
+if(functionNum == 2) then
+    alias swapPID R3;
+    swapPID = -1;
+    alias i R4;
+    i = 3;
+    alias maxTick R10;
+    maxTick = -1;
+    alias processTable R11;
+
+    //-----finding a swapped process in the READY state with the highest TICK-----
+    while(i<MAX_PROC_NUM - 1) do
+        processTable = PROCESS_TABLE + i * 16;
+        if([processTable + 6] == 1 && [processTable + 4] == READY) then
+            if([processTable] > maxTick) then
+                maxTick = [processTable];
+                swapPID = i;
+            endif;
+        endif;
+        i = i + 1;
+    endwhile;
+    if(swapPID == -1) then
+        [SYSTEM_STATUS_TABLE + 5] = 0;
+        R0 = -1;
+        return;
+    endif;
+
+    [PROCESS_TABLE + swapPID * 16] = 0; //resetting TICK
+
+    //-------loading back heap and stack pages------
+    i=2;
+    alias ptbr R8;
+    ptbr = PAGE_TABLE_BASE + swapPID * 20;
+    alias diskMapTable R9;
+    alias pageNum R10;
+    diskMapTable = DISK_MAP_TABLE + swapPID * 10;
+    while(i<10) do
+        if((i < 4 || i > 7) && [diskMapTable + i] != -1) then
+
+            //----getting a free page
+            multipush(R1,R2,R3,R4,R8,R9,R10);
+            R1 = GET_FREE_PAGE;
+            call MEMORY_MANAGER;
+            multipop(R1,R2,R3,R4,R8,R9,R10);
+            pageNum = R0;
+
+            //----loading back from disk
+            multipush(R1,R2,R3,R4,R8,R9,R10);
+            R1 = DISK_LOAD;
+            R2 = SWAPPER_DAEMON;
+            R3 = pageNum;
+            R4 = [diskMapTable + i];
+            call DEVICE_MANAGER;
+            multipop(R1,R2,R3,R4,R8,R9,R10);
+
+            //----releasing the swap block
+            multipush(R1,R2,R3,R4,R8,R9,R10);
+            R1 = RELEASE_BLOCK;
+            R2 = [diskMapTable + i];
+            R3 = SWAPPER_DAEMON;
+            call MEMORY_MANAGER;
+            multipop(R1,R2,R3,R4,R8,R9,R10);
+            
+
+            //setting the page table and invalidating disk map table entries
+            [ptbr + 2 * i] = pageNum;
+            [ptbr + 2 * i + 1] = "0110";
+            [diskMapTable + i] = -1;
+        endif;
+        i = i + 1;
+    endwhile;
+
+    [PROCESS_TABLE + swapPID * 16 + 6] = 0;
+
+    [SYSTEM_STATUS_TABLE + 4] = [SYSTEM_STATUS_TABLE + 4] + 1;
+    [SYSTEM_STATUS_TABLE + 5] = 0;
+
+    return;
+
+endif;

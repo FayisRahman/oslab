@@ -5,13 +5,48 @@ SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
 
 backup;
 
+//-----------PAGER_MODULE----------------//
+if([SYSTEM_STATUS_TABLE + 5] == 1) then //paging has been initiated
+
+	if([SYSTEM_STATUS_TABLE + 1] == SWAPPER_DAEMON) then
+		R1 = [SYSTEM_STATUS_TABLE + 5];
+		R2 = [SYSTEM_STATUS_TABLE + 1];
+		call PAGER_MODULE;
+	endif;
+	
+	//otherwise there is only one possibility which is the idle_process being teh current..so here we dont have to do anything we just have to skip to the endif;
+else	
+	//paging is not initiated so we have to check whetehr paging should be initiated or not
+
+	if([SYSTEM_STATUS_TABLE + 2] < MEM_LOW) then
+		[SYSTEM_STATUS_TABLE + 5] = SWAP_OUT;
+	else
+		if([SYSTEM_STATUS_TABLE + 4] > 0) then
+			if([SYSTEM_STATUS_TABLE + 2] > MEM_HIGH) then
+				[SYSTEM_STATUS_TABLE + 5] = SWAP_IN;
+			else
+				alias i R0;
+				i = 0;
+				while(i<MAX_PROC_NUM) do
+					if([PROCESS_TABLE + i *16 + 6] == 1 && [PROCESS_TABLE + i * 16] > MAX_TICK) then //swapped out process are swapped out for too long
+						[SYSTEM_STATUS_TABLE + 5] = SWAP_IN;
+						break;
+					endif;
+					i = i + 1;
+				endwhile;
+			endif;
+		endif;
+	endif;
+endif;
+//-----------PAGER_MODULE----------------//
+
 [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 4] = READY;
 
 alias i R0;
 i=0;
 while(i<16) do
 	if([PROCESS_TABLE + i * 16 + 4] != TERMINATED) then
-		[PROCESS_TABLE + i* 16 + 0] = [PROCESS_TABLE + i*16 + 0] + 1;
+		[PROCESS_TABLE + i* 16 + 0] = [PROCESS_TABLE + i*16 + 0] + 1; //incrementing teh tick value
 	endif;
 	i = i + 1;
 endwhile;

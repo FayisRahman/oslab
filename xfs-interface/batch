@@ -27,6 +27,7 @@ load --module 2 $HOME/myexpos/spl/spl_progs/module_2.xsm
 load --module 3 $HOME/myexpos/spl/spl_progs/module_3.xsm
 load --module 4 $HOME/myexpos/spl/spl_progs/module_4.xsm
 load --module 5 $HOME/myexpos/spl/spl_progs/module_5.xsm
+load --module 6 $HOME/myexpos/spl/spl_progs/module_6.xsm
 load --module 7 $HOME/myexpos/spl/spl_progs/module_7.xsm
 rm create.xsm
 load --exec $HOME/myexpos/expl/expl_progs/assg/assg1/create.xsm
@@ -38,4 +39,6 @@ rm lu.xsm
 load --exec $HOME/myexpos/expl/expl_progs/exec_commands/lu.xsm
 rm ru.xsm
 load --exec $HOME/myexpos/expl/expl_progs/exec_commands/ru.xsm
+rm assg1.xsm
+load --exec $HOME/myexpos/expl/expl_progs/assg_27/assg1.xsm
 exit

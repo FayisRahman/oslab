@@ -19,16 +19,22 @@ process_table_entry = PROCESS_TABLE + currentPID * 16;
 alias newPID R3;
 newPID = currentPID + 1;
 
-while(newPID < 16) do
-    if( ( [PROCESS_TABLE + newPID*16 + 4] == READY || [PROCESS_TABLE + newPID*16 + 4] == CREATED ) ) then
-        break;
+if([SYSTEM_STATUS_TABLE + 5] == 1) then
+    if([PROCESS_TABLE + 15 * 16 + 4] == WAIT_DISK) then
+        newPID = 0;
+    else
+        newPID = SWAPPER_DAEMON;
     endif;
-    newPID = newPID + 1;
-endwhile;
+else
+    while(newPID < 16) do
+        if(([PROCESS_TABLE + newPID*16 + 4] == READY || [PROCESS_TABLE + newPID*16 + 4] == CREATED ) && [PROCESS_TABLE + newPID * 16 + 6] == 0) then
+            break;
+        endif;
+        newPID = newPID + 1;
+    endwhile;
+endif;
 
-
-
-if(newPID == 16) then
+if(newPID >= 16) then
     newPID = 0;
 endif;
 

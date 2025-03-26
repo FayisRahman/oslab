@@ -108,15 +108,17 @@ loadi(43,56);
 loadi(44,57);
 loadi(45,58);
 
-//module 4
+//module 3
 loadi(46,59);
 loadi(47,60);
-
 
 //module 4
 loadi(48,61);
 loadi(49,62);
 
+//module 6
+loadi(52,65);
+loadi(43,66);
 
 
 //initialising disk status table
@@ -132,6 +134,7 @@ alias i R0;
 i = 0;
 while(i<16) do
     [PROCESS_TABLE + 16*i + 4] = TERMINATED;
+    [PROCESS_TABLE + 16*i] = 0;
     i = i + 1;
 endwhile;
 
@@ -153,12 +156,15 @@ alias processTable R1;
 
 //initialising system status table
 
-[SYSTEM_STATUS_TABLE + 2] = 47;
+[SYSTEM_STATUS_TABLE + 2] = 45;
 [SYSTEM_STATUS_TABLE + 3] = 0;
+[SYSTEM_STATUS_TABLE + 4] = 0;
+[SYSTEM_STATUS_TABLE + 5] = 0;
 
 //init_page_Table
 PTBR = PAGE_TABLE_BASE+20;
 PTLR = 10;
+
 //Library
 [PTBR+0] = 63;
 [PTBR+1] = "0100";
